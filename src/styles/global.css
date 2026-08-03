@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&display=swap');
+
+:root {
+  --tf-accent: #5856D6;
+  --tf-bg: #F5F5F7;
+  --tf-surface: #FFFFFF;
+  --tf-border: rgba(0, 0, 0, 0.06);
+  --tf-text: #1D1D1F;
+  --tf-text-secondary: #6E6E73;
+  --tf-mag-leve: #34C759;
+  --tf-mag-moderado: #FFCC00;
+  --tf-mag-fuerte: #FF9500;
+  --tf-mag-severo: #FF3B30;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Manrope', sans-serif;
+  background: var(--tf-bg);
+  color: var(--tf-text);
+}
+
+.tf-card {
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-border);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.tf-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--tf-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 18px;
+  border-radius: 10px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+
+.tf-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.tf-nav-logo {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--tf-accent);
+  text-decoration: none;
+}
+
+.tf-nav-links {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tf-nav-links a {
+  color: var(--tf-text-secondary);
+  text-decoration: none;
+}
+
+.tf-nav-links a:hover {
+  color: var(--tf-text);
+}

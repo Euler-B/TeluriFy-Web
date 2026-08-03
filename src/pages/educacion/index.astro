@@ -1,0 +1,18 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const lessons = (await getCollection('education'))
+  .sort((a, b) => a.data.order - b.data.order);
+---
+<BaseLayout title="Educación sísmica">
+  <h1>Educación sísmica</h1>
+  <ul>
+    {lessons.map((lesson) => (
+      <li>
+        <a href={`/educacion/${lesson.id}`}>{lesson.data.title}</a>
+        <p>{lesson.data.description}</p>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>
