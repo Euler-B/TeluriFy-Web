@@ -51,8 +51,8 @@ const eduItems = (await getCollection('education')).slice(0, 2);
         <p style="font-size: 13px; color: var(--tf-text-secondary); font-weight: 500; margin: 0 0 12px; line-height: 1.45;">
           Monitoreo con clustering de eventos sísmicos globales integrando la API del USGS.
         </p>
-        <a href="/mapa" style="font-size: 12px; font-weight: 700; color: var(--tf-accent); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-          Ir al mapa <i class="ti ti-arrow-right"></i>
+        <a href="/mapa" class="tf-button-secondary" style="padding: 8px 14px; font-size: 12px; margin-top: 4px;">
+          Ir al mapa
         </a>
       </div>
 
@@ -64,8 +64,8 @@ const eduItems = (await getCollection('education')).slice(0, 2);
         <p style="font-size: 13px; color: var(--tf-text-secondary); font-weight: 500; margin: 0 0 12px; line-height: 1.45;">
           Envía la intensidad percibida en tu localidad para nutrir el mapa de intensidad sísmica.
         </p>
-        <a href="/mapa" style="font-size: 12px; font-weight: 700; color: var(--tf-accent); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-          Reportar evento <i class="ti ti-arrow-right"></i>
+        <a href="/mapa" class="tf-button-secondary" style="padding: 8px 14px; font-size: 12px; margin-top: 4px;">
+          Reportar evento
         </a>
       </div>
 
@@ -77,8 +77,8 @@ const eduItems = (await getCollection('education')).slice(0, 2);
         <p style="font-size: 13px; color: var(--tf-text-secondary); font-weight: 500; margin: 0 0 12px; line-height: 1.45;">
           Aprende sobre falla de placas, magnitudes sísmicas y protocolos de prevención.
         </p>
-        <a href="/educacion" style="font-size: 12px; font-weight: 700; color: var(--tf-accent); text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-          Ver artículos <i class="ti ti-arrow-right"></i>
+        <a href="/educacion" class="tf-button-secondary" style="padding: 8px 14px; font-size: 12px; margin-top: 4px;">
+          Ver artículos
         </a>
       </div>
     </div>
@@ -90,8 +90,8 @@ const eduItems = (await getCollection('education')).slice(0, 2);
       <h2 style="font-size: 18px; font-weight: 700; letter-spacing: -0.3px; margin: 0;">
         Recursos destacados
       </h2>
-      <a href="/blog" style="font-size: 13px; font-weight: 600; color: var(--tf-accent); text-decoration: none;">
-        Ver todo →
+      <a href="/blog" class="tf-button-secondary" style="padding: 6px 14px; font-size: 12px;">
+        Ver todo
       </a>
     </div>
 
@@ -102,7 +102,6 @@ const eduItems = (await getCollection('education')).slice(0, 2);
             <span style="font-size: 11px; font-weight: 700; background: rgba(88, 86, 214, 0.1); color: var(--tf-accent); padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">
               Educación · {item.data.level}
             </span>
-            <i class="ti ti-chevron-right" style="color: var(--tf-text-secondary); font-size: 16px;"></i>
           </div>
           <h3 style="font-size: 15px; font-weight: 700; margin: 0 0 4px; color: var(--tf-text);">
             {item.data.title}
@@ -119,7 +118,6 @@ const eduItems = (await getCollection('education')).slice(0, 2);
             <span style="font-size: 11px; font-weight: 700; background: rgba(52, 199, 89, 0.1); color: #34C759; padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">
               Blog · Novedades
             </span>
-            <i class="ti ti-chevron-right" style="color: var(--tf-text-secondary); font-size: 16px;"></i>
           </div>
           <h3 style="font-size: 15px; font-weight: 700; margin: 0 0 4px; color: var(--tf-text);">
             {post.data.title}

@@ -208,8 +208,7 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
         <p style={{ fontSize: 14, color: 'var(--tf-text-secondary)', fontWeight: 500, margin: '0 0 20px' }}>
           El evento sísmico con ID <code>{sismoId}</code> no fue encontrado en los datos actuales.
         </p>
-        <a href="/" className="tf-button">
-          <i className="ti ti-arrow-left" />
+        <a href="/mapa" className="tf-button-secondary" style={{ padding: '8px 16px', fontSize: 13, textDecoration: 'none', display: 'inline-block' }}>
           Volver al mapa
         </a>
       </div>
@@ -273,10 +272,9 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
               href={links.external_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="tf-button"
-              style={{ marginTop: 14, fontSize: 12 }}
+              className="tf-button-secondary"
+              style={{ marginTop: 14, fontSize: 12, display: 'inline-block' }}
             >
-              <i className="ti ti-external-link" />
               Ver en USGS
             </a>
           )}

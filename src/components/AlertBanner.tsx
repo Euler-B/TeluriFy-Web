@@ -60,7 +60,7 @@ export default function AlertBanner({ sismos }: { sismos: Sismo[] }) {
             padding: '3px 8px',
           }}
         >
-          Ver en USGS ↗
+          Ver en USGS
         </a>
       )}
     </div>

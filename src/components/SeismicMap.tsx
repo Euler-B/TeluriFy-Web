@@ -180,8 +180,12 @@ export default function SeismicMap({ sismos }: Props) {
                   <div style={{ fontSize: 11, color: '#6E6E73', margin: '4px 0 8px' }}>
                     {new Date(sismo.attributes.time).toLocaleString('es', { dateStyle: 'medium', timeStyle: 'short' })}
                   </div>
-                  <a href={`/sismos/${sismo.id}`} style={{ fontSize: 11, color: '#5856D6', fontWeight: 600, display: 'block', marginBottom: 6 }}>
-                    Ver detalle →
+                  <a
+                    href={`/sismos/${sismo.id}`}
+                    className="tf-button-primary"
+                    style={{ fontSize: 11, padding: '5px 12px', display: 'inline-block', marginBottom: 8, textDecoration: 'none' }}
+                  >
+                    Ver detalle
                   </a>
                   <ReportForm sismoId={sismo.id} />
                 </div>
