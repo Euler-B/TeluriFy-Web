@@ -11,6 +11,11 @@ jobs:
     name: Build & Verify Astro Project
     runs-on: ubuntu-latest
 
+    # For fork PRs, secrets are not available — use a safe test URL instead.
+    # For trusted push-to-main, use the real secret.
+    env:
+      PUBLIC_API_URL: ${{ github.event_name == 'push' && secrets.PUBLIC_API_URL || 'http://localhost:3000' }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,7 +32,24 @@ jobs:
       - name: Run Astro check (TypeScript & Content Collections verification)
         run: npx astro check
 
+      - name: Validate required environment secrets
+        run: |
+          node -e "
+            const url = process.env.PUBLIC_API_URL?.trim();
+            if (!url) {
+              console.error('::error::PUBLIC_API_URL is not set or is blank. Add it in Settings → Secrets and variables → Actions.');
+              process.exit(1);
+            }
+            try {
+              const parsed = new URL(url);
+              if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
+                throw new Error('invalid protocol or empty hostname');
+              }
+            } catch {
+              console.error('::error::PUBLIC_API_URL is not a valid http/https URL: ' + url);
+              process.exit(1);
+            }
+          "
+
       - name: Verify production build
         run: npm run build
-        env:
-          PUBLIC_API_URL: ${{ secrets.PUBLIC_API_URL || 'http://localhost:3000' }}

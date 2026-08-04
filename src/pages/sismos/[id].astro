@@ -1,0 +1,54 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SismoDetail from '../../components/SismoDetail';
+
+const { id } = Astro.params;
+const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+
+let sismo = null;
+
+// Paginate /v1/sismos until the target ID is found
+try {
+  const PER_PAGE = 1000;
+  let page = 1;
+  let total = Infinity;
+  const signal = AbortSignal.timeout(8000);
+
+  while ((page - 1) * PER_PAGE < total) {
+    const res = await fetch(
+      `${apiUrl}/v1/sismos?per_page=${PER_PAGE}&page=${page}`,
+      { signal }
+    );
+    if (!res.ok) break;
+    const json = await res.json();
+    if (!Array.isArray(json.data) || json.data.length === 0) break;
+
+    total = json.pagination?.total ?? json.data.length;
+
+    const found = json.data.find(
+      (item: any) =>
+        String(item.id) === String(id) ||
+        item.attributes?.external_id === id
+    );
+    if (found) {
+      sismo = found;
+      break;
+    }
+    page++;
+  }
+} catch {
+  // sismo remains null — SismoDetail will show the not-found state
+}
+---
+<BaseLayout title={sismo ? `M ${sismo.attributes.magnitude} · ${sismo.attributes.place}` : `Sismo #${id}`}>
+  <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+    <a href="/" style="font-size: 13px; font-weight: 600; color: var(--tf-text-secondary); text-decoration: none; display: flex; align-items: center; gap: 4px;">
+      <i class="ti ti-arrow-left" style="font-size: 14px;"></i>
+      Volver al mapa
+    </a>
+  </div>
+  <SismoDetail client:load sismoId={String(id)} initialSismo={sismo} />
+</BaseLayout>
+
