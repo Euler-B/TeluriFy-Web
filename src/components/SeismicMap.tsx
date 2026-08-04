@@ -44,21 +44,30 @@ function magnitudeIcon(magnitude: number) {
 
 function ReportForm({ sismoId }: { sismoId: number }) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [selectedValue, setSelectedValue] = useState('');
 
   async function submitReport(intensity: string) {
     setStatus('sending');
     try {
+      const apiUrl = import.meta.env.PUBLIC_API_URL;
+      if (!apiUrl) throw new Error('PUBLIC_API_URL is not set');
       const res = await fetch(
-        `${import.meta.env.PUBLIC_API_URL}/v1/sismos/${sismoId}/reports`,
+        `${apiUrl}/v1/sismos/${sismoId}/reports`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ felt: intensity !== 'not_felt', intensity }),
         }
       );
-      setStatus(res.ok ? 'sent' : 'error');
+      if (res.ok) {
+        setStatus('sent');
+      } else {
+        setStatus('error');
+        setSelectedValue('');
+      }
     } catch {
       setStatus('error');
+      setSelectedValue('');
     }
   }
 
@@ -69,8 +78,12 @@ function ReportForm({ sismoId }: { sismoId: number }) {
       <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600 }}>¿Sentiste este sismo?</p>
       <select
         disabled={status === 'sending'}
-        defaultValue=""
-        onChange={(e) => e.target.value && submitReport(e.target.value)}
+        value={selectedValue}
+        onChange={(e) => {
+          const val = e.target.value;
+          setSelectedValue(val);
+          if (val) submitReport(val);
+        }}
         style={{ fontSize: 12, padding: '4px 6px', borderRadius: 6, border: '1px solid rgba(0,0,0,0.15)', width: '100%' }}
       >
         <option value="" disabled>Selecciona intensidad</option>
@@ -122,7 +135,7 @@ export default function SeismicMap({ sismos }: Props) {
       </div>
 
       {/* Legend */}
-      <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 10, fontSize: 11, color: 'var(--tf-text-secondary)', fontWeight: 600 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center', marginBottom: 10, fontSize: 11, color: 'var(--tf-text-secondary)', fontWeight: 600 }}>
         <span><i className="ti ti-point-filled" style={{ color: '#34C759' }} /> Leve (&lt;3.0)</span>
         <span><i className="ti ti-point-filled" style={{ color: '#FFCC00' }} /> Moderado (3–5)</span>
         <span><i className="ti ti-point-filled" style={{ color: '#FF9500' }} /> Fuerte (5–6)</span>
@@ -157,11 +170,9 @@ export default function SeismicMap({ sismos }: Props) {
                   <div style={{ fontSize: 11, color: '#6E6E73', margin: '4px 0 8px' }}>
                     {new Date(sismo.attributes.time).toLocaleString('es', { dateStyle: 'medium', timeStyle: 'short' })}
                   </div>
-                  {sismo.links?.external_url && (
-                    <a href={`/sismos/${sismo.id}`} style={{ fontSize: 11, color: '#5856D6', fontWeight: 600, display: 'block', marginBottom: 4 }}>
-                      Ver detalle →
-                    </a>
-                  )}
+                  <a href={`/sismos/${sismo.id}`} style={{ fontSize: 11, color: '#5856D6', fontWeight: 600, display: 'block', marginBottom: 6 }}>
+                    Ver detalle →
+                  </a>
                   <ReportForm sismoId={sismo.id} />
                 </div>
               </Popup>

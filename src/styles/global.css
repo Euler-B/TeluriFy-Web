@@ -152,9 +152,7 @@ body {
   margin-bottom: 8px;
   padding: 4px;
 }
-.tf-mobile-drawer.open {
-  display: block;
-}
+
 
 /* ── Alert banner ── */
 .tf-alert-banner {
@@ -200,6 +198,7 @@ body {
 /* ── Filter bar ── */
 .tf-filter-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
@@ -226,5 +225,8 @@ body {
   }
   .tf-stats-bar {
     grid-template-columns: 1fr;
+  }
+  .tf-mobile-drawer.open {
+    display: block;
   }
 }

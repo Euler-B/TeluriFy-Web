@@ -1,7 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 
 type Sismo = {
   id: number;
@@ -47,8 +44,9 @@ function ReportForm({ sismoId }: { sismoId: number }) {
   async function submitReport(intensity: string) {
     setStatus('sending');
     try {
+      const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
       const res = await fetch(
-        `${import.meta.env.PUBLIC_API_URL}/v1/sismos/${sismoId}/reports`,
+        `${apiUrl}/v1/sismos/${sismoId}/reports`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -123,61 +121,74 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
   const [sismo, setSismo] = useState<Sismo | null>(initialSismo ?? null);
   const [loading, setLoading] = useState(!initialSismo);
   const [error, setError] = useState(false);
+  const [MiniMap, setMiniMap] = useState<React.ComponentType<{ lat: number; lng: number; color: string }> | null>(null);
 
   useEffect(() => {
+    import('./SismoMiniMap').then((mod) => setMiniMap(() => mod.default));
+  }, []);
+
+  useEffect(() => {
+
     if (initialSismo) {
       setSismo(initialSismo);
       setLoading(false);
       return;
     }
 
+    let active = true;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
     setLoading(true);
 
     async function loadSismo() {
       try {
-        // 1. Try single item endpoint
-        const res = await fetch(`${apiUrl}/v1/sismos/${sismoId}`);
-        if (res.ok) {
-          const json = await res.json();
-          if (json.data && json.data.id) {
-            setSismo(json.data);
-            setLoading(false);
-            return;
-          }
-        }
-      } catch (e) {
-        // Ignore single fetch error, attempt list fetch next
-      }
+        const PER_PAGE = 1000;
+        let page = 1;
+        let total = Infinity;
 
-      // 2. Fallback: search in list endpoint
-      try {
-        const listRes = await fetch(`${apiUrl}/v1/sismos?per_page=1000`);
-        if (listRes.ok) {
-          const listJson = await listRes.json();
-          const list: Sismo[] = listJson.data ?? [];
-          const found = list.find(
-            (item) =>
+        while ((page - 1) * PER_PAGE < total) {
+          const res = await fetch(
+            `${apiUrl}/v1/sismos?per_page=${PER_PAGE}&page=${page}`,
+            { signal: controller.signal }
+          );
+          if (!active) return;
+          if (!res.ok) { if (active) setError(true); break; }
+          const json = await res.json();
+          if (!active) return;
+          if (!Array.isArray(json.data)) { if (active) setError(true); break; }
+
+          total = json.pagination?.total ?? json.data.length;
+
+          const found: Sismo | undefined = json.data.find(
+            (item: Sismo) =>
               String(item.id) === String(sismoId) ||
               item.attributes?.external_id === sismoId
           );
           if (found) {
-            setSismo(found);
-            setError(false);
-          } else {
-            setError(true);
+            if (active) { setSismo(found); setError(false); }
+            break;
           }
-        } else {
-          setError(true);
+          if (page * PER_PAGE >= total) {
+            if (active) setError(true);
+            break;
+          }
+          page++;
         }
-      } catch (e) {
-        setError(true);
+      } catch {
+        if (active) setError(true);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
 
     loadSismo();
+
+    return () => {
+      active = false;
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [sismoId, initialSismo]);
 
   if (loading) {
@@ -209,13 +220,6 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
   const color = magnitudeColor(a.magnitude);
   const lat = a.coordinates.latitude;
   const lng = a.coordinates.longitude;
-
-  const icon = L.divIcon({
-    className: '',
-    html: `<div style="width:24px;height:24px;border-radius:50%;background:${color}88;border:2px solid ${color};"></div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-  });
 
   return (
     <div style={{ display: 'grid', gap: 16 }}>
@@ -280,20 +284,11 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
       </div>
 
       {/* Mini map */}
-      <div className="tf-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <MapContainer
-          center={[lat, lng]}
-          zoom={7}
-          style={{ height: 320, width: '100%' }}
-          zoomControl={true}
-        >
-          <TileLayer
-            attribution='&copy; OpenStreetMap contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <Marker position={[lat, lng]} icon={icon} />
-        </MapContainer>
-      </div>
+      {MiniMap ? (
+        <MiniMap lat={lat} lng={lng} color={color} />
+      ) : (
+        <div className="tf-card" style={{ height: 320, background: 'var(--tf-bg)' }} />
+      )}
 
       {/* Report card */}
       <div className="tf-card">

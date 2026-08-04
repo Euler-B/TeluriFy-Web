@@ -54,7 +54,7 @@ graph TD
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Astro 5+](https://astro.build/) (Server/Hybrid mode with `@astrojs/node`)
+- **Framework**: [Astro 5+](https://astro.build/) (Server mode with `@astrojs/node`)
 - **UI & Islands**: [React 19](https://react.dev/)
 - **Mapping**: [Leaflet](https://leafletjs.com/) + [React Leaflet Cluster](https://github.com/akiran/react-leaflet-cluster)
 - **Styling**: Vanilla CSS with native CSS variables and design tokens

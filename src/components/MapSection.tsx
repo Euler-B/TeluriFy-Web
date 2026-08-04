@@ -10,11 +10,64 @@ export default function MapSection() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetch(`${import.meta.env.PUBLIC_API_URL}/v1/sismos?per_page=1000`)
-      .then((res) => res.json())
-      .then((json) => setSismos(json.data ?? []))
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
+    let isMounted = true;
+
+    async function fetchAllSismos() {
+      const baseUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+      const perPage = 1000;
+      let aggregated: Sismo[] = [];
+
+      try {
+        const firstRes = await fetch(`${baseUrl}/v1/sismos?per_page=${perPage}&page=1`);
+        if (!firstRes.ok) throw new Error(`HTTP error ${firstRes.status}`);
+        const firstJson = await firstRes.json();
+
+        if (!Array.isArray(firstJson.data)) {
+          throw new Error('Invalid payload: json.data is not an array');
+        }
+
+        const firstData: Sismo[] = firstJson.data;
+        aggregated = [...firstData];
+        const pagination = firstJson.pagination;
+
+        if (pagination && typeof pagination.total === 'number' && firstData.length > 0) {
+          const total = pagination.total;
+          const totalPages = Math.ceil(total / perPage);
+
+          for (let page = 2; page <= totalPages; page++) {
+            if (aggregated.length >= total) break;
+            const res = await fetch(`${baseUrl}/v1/sismos?per_page=${perPage}&page=${page}`);
+            if (!res.ok) throw new Error(`HTTP error ${res.status} on page ${page}`);
+            const json = await res.json();
+            if (!Array.isArray(json.data)) {
+              throw new Error(`Invalid payload on page ${page}`);
+            }
+            const data: Sismo[] = json.data;
+            if (data.length === 0) break;
+            aggregated.push(...data);
+          }
+        }
+
+        if (isMounted) {
+          setSismos(aggregated);
+          setError(false);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(true);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchAllSismos();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (loading) {

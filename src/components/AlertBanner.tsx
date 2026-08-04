@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 type Sismo = {
   id: number;
@@ -13,13 +13,19 @@ type Sismo = {
 };
 
 export default function AlertBanner({ sismos }: { sismos: Sismo[] }) {
-  const now = Date.now();
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   const severe = sismos
-    .filter(
-      (s) =>
-        s.attributes.magnitude >= 6.0 &&
-        now - new Date(s.attributes.time).getTime() < 86_400_000
-    )
+    .filter((s) => {
+      if (s.attributes.magnitude < 6.0) return false;
+      const age = now - new Date(s.attributes.time).getTime();
+      return age >= 0 && age < 86_400_000;
+    })
     .sort((a, b) => b.attributes.magnitude - a.attributes.magnitude);
 
   if (severe.length === 0) return null;

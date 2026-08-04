@@ -9,35 +9,37 @@ const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
 
 let sismo = null;
 
-// 1. Try single item endpoint
+// Paginate /v1/sismos until the target ID is found
 try {
-  const res = await fetch(`${apiUrl}/v1/sismos/${id}`);
-  if (res.ok) {
-    const json = await res.json();
-    if (json.data && json.data.id) {
-      sismo = json.data;
-    }
-  }
-} catch (e) {
-  // Ignore server fetch error, fallback will attempt list or client-side fetch
-}
+  const PER_PAGE = 1000;
+  let page = 1;
+  let total = Infinity;
+  const signal = AbortSignal.timeout(8000);
 
-// 2. Fallback: if single endpoint returned 404 or failed, search in the sismos list
-if (!sismo) {
-  try {
-    const listRes = await fetch(`${apiUrl}/v1/sismos?per_page=1000`);
-    if (listRes.ok) {
-      const listJson = await listRes.json();
-      const list = listJson.data ?? [];
-      sismo = list.find(
-        (item: any) =>
-          String(item.id) === String(id) ||
-          item.attributes?.external_id === id
-      ) ?? null;
+  while ((page - 1) * PER_PAGE < total) {
+    const res = await fetch(
+      `${apiUrl}/v1/sismos?per_page=${PER_PAGE}&page=${page}`,
+      { signal }
+    );
+    if (!res.ok) break;
+    const json = await res.json();
+    if (!Array.isArray(json.data) || json.data.length === 0) break;
+
+    total = json.pagination?.total ?? json.data.length;
+
+    const found = json.data.find(
+      (item: any) =>
+        String(item.id) === String(id) ||
+        item.attributes?.external_id === id
+    );
+    if (found) {
+      sismo = found;
+      break;
     }
-  } catch (e) {
-    // Ignore error
+    page++;
   }
+} catch {
+  // sismo remains null — SismoDetail will show the not-found state
 }
 ---
 <BaseLayout title={sismo ? `M ${sismo.attributes.magnitude} · ${sismo.attributes.place}` : `Sismo #${id}`}>
@@ -47,5 +49,6 @@ if (!sismo) {
       Volver al mapa
     </a>
   </div>
-  <SismoDetail client:only="react" sismoId={String(id)} initialSismo={sismo} />
+  <SismoDetail client:load sismoId={String(id)} initialSismo={sismo} />
 </BaseLayout>
+
