@@ -1,0 +1,22 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import MapSection from '../components/MapSection';
+---
+<BaseLayout title="Mapa Sísmico Interactivo">
+  <div style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.4px;">
+        Monitoreo Sísmico en Tiempo Real
+      </h1>
+      <p style="font-size: 13px; color: var(--tf-text-secondary); margin: 4px 0 0; font-weight: 500;">
+        Exploración interactiva de sismos registrados globalmente por USGS y percepción ciudadana.
+      </p>
+    </div>
+  </div>
+
+  <div class="tf-card" style="padding: 16px;">
+    <MapSection client:only="react" />
+  </div>
+</BaseLayout>

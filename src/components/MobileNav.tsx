@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 
 const NAV_LINKS = [
-  { href: '/', label: 'Mapa', icon: 'ti-map-2' },
+  { href: '/', label: 'Inicio', icon: 'ti-home' },
+  { href: '/mapa', label: 'Mapa', icon: 'ti-map-2' },
   { href: '/blog', label: 'Blog', icon: 'ti-pencil' },
   { href: '/educacion', label: 'Educación', icon: 'ti-school' },
   { href: '/noticias', label: 'Noticias', icon: 'ti-news' },
