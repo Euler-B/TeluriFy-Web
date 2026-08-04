@@ -73,13 +73,13 @@ export default function MapSection() {
   if (loading) {
     return (
       <div className="tf-seismograph-container">
-        <svg className="tf-seismograph-svg" viewBox="0 0 500 140" fill="none">
+        <svg className="tf-seismograph-svg" viewBox="0 0 500 180" fill="none" style={{ overflow: 'visible' }}>
           {/* Baseline grid line */}
-          <line x1="0" y1="70" x2="500" y2="70" stroke="var(--tf-border)" strokeWidth="1" strokeDasharray="4 4" />
+          <line x1="0" y1="90" x2="500" y2="90" stroke="var(--tf-border)" strokeWidth="1" strokeDasharray="4 4" />
 
           {/* Base seismograph waveform (always visible) */}
           <path
-            d="M 10 70 L 100 70 L 120 70 L 140 56 L 160 84 L 180 44 L 200 96 L 220 46 L 250 18 L 270 122 L 290 38 L 310 92 L 330 52 L 350 78 L 370 66 L 390 72 L 410 70 L 490 70"
+            d="M 10 90 L 100 90 L 120 90 L 140 76 L 160 104 L 180 64 L 200 116 L 220 66 L 250 38 L 270 142 L 290 58 L 310 112 L 330 72 L 350 98 L 370 86 L 390 92 L 410 90 L 490 90"
             stroke="rgba(88, 86, 214, 0.25)"
             strokeWidth="4"
             strokeLinecap="round"
@@ -90,7 +90,7 @@ export default function MapSection() {
           <path
             className="tf-seismo-pulse-path"
             pathLength="1000"
-            d="M 10 70 L 100 70 L 120 70 L 140 56 L 160 84 L 180 44 L 200 96 L 220 46 L 250 18 L 270 122 L 290 38 L 310 92 L 330 52 L 350 78 L 370 66 L 390 72 L 410 70 L 490 70"
+            d="M 10 90 L 100 90 L 120 90 L 140 76 L 160 104 L 180 64 L 200 116 L 220 66 L 250 38 L 270 142 L 290 58 L 310 112 L 330 72 L 350 98 L 370 86 L 390 92 L 410 90 L 490 90"
             stroke="var(--tf-accent)"
             strokeWidth="4"
             strokeLinecap="round"
@@ -98,20 +98,13 @@ export default function MapSection() {
           />
 
           {/* Epicenter group with expanding shockwaves */}
-          <g transform="translate(250, 18)">
+          <g transform="translate(250, 38)">
             <circle className="tf-seismo-ring" r="1" stroke="var(--tf-accent)" strokeWidth="2" fill="none" />
             <circle className="tf-seismo-ring" r="1" stroke="var(--tf-accent)" strokeWidth="2" fill="none" />
             <circle className="tf-seismo-ring" r="1" stroke="var(--tf-accent)" strokeWidth="2" fill="none" />
             <circle className="tf-seismo-dot" r="6" fill="#FF3B30" stroke="#FFFFFF" strokeWidth="2" />
           </g>
         </svg>
-
-        <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--tf-text)', marginBottom: 6, letterSpacing: '-0.3px' }}>
-          Simulando ondas de movimiento telúrico...
-        </div>
-        <div style={{ fontSize: 13, color: 'var(--tf-text-secondary)', fontWeight: 500 }}>
-          Sincronizando eventos en tiempo real desde la red USGS
-        </div>
       </div>
     );
   }

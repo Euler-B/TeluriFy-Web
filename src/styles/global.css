@@ -241,16 +241,16 @@ body {
   background: var(--tf-surface);
   border: 1px solid var(--tf-border);
   border-radius: 16px;
-  padding: 32px;
+  padding: 40px 24px;
   position: relative;
   overflow: hidden;
 }
 
 .tf-seismograph-svg {
   width: 100%;
-  max-width: 520px;
-  height: 160px;
-  margin-bottom: 24px;
+  max-width: 540px;
+  height: 200px;
+  overflow: visible;
 }
 
 .tf-seismo-pulse-path {
@@ -292,10 +292,10 @@ body {
 @keyframes seismoExpand {
   0% {
     transform: scale(1);
-    opacity: 0.9;
+    opacity: 0.95;
   }
   100% {
-    transform: scale(45);
+    transform: scale(22);
     opacity: 0;
   }
 }
