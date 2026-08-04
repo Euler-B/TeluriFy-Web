@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import MobileNav from '../components/MobileNav';
+import ThemeToggle from '../components/ThemeToggle';
 
 interface Props {
   title: string;
@@ -15,17 +16,27 @@ const { title } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
     <title>{title} · Telurify</title>
+    <script is:inline>
+      // Avoid flash of unstyled theme on SSR load
+      const rawTheme = localStorage.getItem('tf-theme');
+      const validSaved = (rawTheme === 'light' || rawTheme === 'dark') ? rawTheme : null;
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = validSaved || (systemPrefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    </script>
   </head>
   <body>
-    <header style="border-bottom: 1px solid var(--tf-border); background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 50;">
+    <header style="border-bottom: 1px solid var(--tf-border); background: var(--tf-header-bg); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 50; transition: background 0.2s ease;">
       <nav class="tf-nav">
         <a href="/" class="tf-nav-logo">Telurify</a>
         <div class="tf-nav-links">
           <a href="/">Inicio</a>
           <a href="/mapa">Mapa</a>
+          <a href="/analitica">Analítica</a>
           <a href="/blog">Blog</a>
           <a href="/educacion">Educación</a>
           <a href="/noticias">Noticias</a>
+          <ThemeToggle client:load />
         </div>
         <MobileNav client:load />
       </nav>

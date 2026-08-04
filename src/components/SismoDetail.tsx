@@ -1,19 +1,7 @@
 import React, { useEffect, useState } from 'react';
-
-type Sismo = {
-  id: number;
-  attributes: {
-    title: string;
-    place: string;
-    magnitude: number;
-    coordinates: { latitude: number; longitude: number };
-    time: string;
-    mag_type: string;
-    tsunami: boolean;
-    external_id: string;
-  };
-  links?: { external_url?: string };
-};
+import type { Sismo } from '../services/api';
+import { submitSismoReport, ApiError } from '../services/api';
+import ShareExportCard from './ShareExportCard';
 
 const INTENSITY_OPTIONS = [
   { value: 'not_felt', label: 'No lo sentí' },
@@ -39,23 +27,23 @@ function magnitudeLabel(mag: number) {
 }
 
 function ReportForm({ sismoId }: { sismoId: number }) {
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error' | 'rate_limited'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
 
   async function submitReport(intensity: string) {
     setStatus('sending');
+    setErrorMessage('');
     try {
-      const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
-      const res = await fetch(
-        `${apiUrl}/v1/sismos/${sismoId}/reports`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ felt: intensity !== 'not_felt', intensity }),
-        }
-      );
-      setStatus(res.ok ? 'sent' : 'error');
-    } catch {
-      setStatus('error');
+      await submitSismoReport(sismoId, intensity !== 'not_felt', intensity);
+      setStatus('sent');
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.isRateLimited) {
+        setStatus('rate_limited');
+        setErrorMessage(err.message);
+      } else {
+        setStatus('error');
+        setErrorMessage('Hubo un error al enviar tu reporte. Intenta de nuevo.');
+      }
     }
   }
 
@@ -103,9 +91,9 @@ function ReportForm({ sismoId }: { sismoId: number }) {
           </button>
         ))}
       </div>
-      {status === 'error' && (
+      {(status === 'error' || status === 'rate_limited') && (
         <p style={{ margin: '8px 0 0', color: '#FF3B30', fontSize: 12, fontWeight: 600 }}>
-          Hubo un error al enviar tu reporte. Intenta de nuevo.
+          {errorMessage}
         </p>
       )}
     </div>
@@ -128,7 +116,6 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
   }, []);
 
   useEffect(() => {
-
     if (initialSismo) {
       setSismo(initialSismo);
       setLoading(false);
@@ -296,6 +283,9 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
         </div>
         <ReportForm sismoId={sismo.id} />
       </div>
+
+      {/* Share and Export card */}
+      <ShareExportCard sismo={sismo} />
     </div>
   );
 }

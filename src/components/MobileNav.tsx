@@ -1,8 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import ThemeToggle from './ThemeToggle';
 
 const NAV_LINKS = [
   { href: '/', label: 'Inicio', icon: 'ti-home' },
   { href: '/mapa', label: 'Mapa', icon: 'ti-map-2' },
+  { href: '/analitica', label: 'Analítica', icon: 'ti-chart-bar' },
   { href: '/blog', label: 'Blog', icon: 'ti-pencil' },
   { href: '/educacion', label: 'Educación', icon: 'ti-school' },
   { href: '/noticias', label: 'Noticias', icon: 'ti-news' },
@@ -17,7 +19,6 @@ export default function MobileNav() {
   useEffect(() => {
     if (!open) return;
 
-    // Move focus into drawer
     closeButtonRef.current?.focus();
 
     function handleKeyDown(e: KeyboardEvent) {
@@ -56,7 +57,6 @@ export default function MobileNav() {
     };
   }, [open]);
 
-  // Close drawer when viewport expands past the mobile breakpoint
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 641px)');
     const handleChange = (e: MediaQueryListEvent) => {
@@ -128,6 +128,9 @@ export default function MobileNav() {
               {link.label}
             </a>
           ))}
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--tf-border)' }}>
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </>
