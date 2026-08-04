@@ -100,7 +100,7 @@ telurify-web/
 ## ⚙️ Getting Started
 
 ### 1. Prerequisites
-- Node.js v18.x or higher
+- Node.js v22.12.0 or higher
 - Running instance of [`Telurify-API`](https://github.com/Euler-B/TeluriFy-API)
 
 ### 2. Installation
