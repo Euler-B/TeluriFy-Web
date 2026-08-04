@@ -1,0 +1,33 @@
+name: CI - Build & Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-verify:
+    name: Build & Verify Astro Project
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Astro check (TypeScript & Content Collections verification)
+        run: npx astro check
+
+      - name: Verify production build
+        run: npm run build
+        env:
+          PUBLIC_API_URL: ${{ secrets.PUBLIC_API_URL || 'http://localhost:3000' }}
