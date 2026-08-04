@@ -1,0 +1,18 @@
+---
+export const prerender = true;
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SeismicAnalytics from '../components/SeismicAnalytics';
+---
+<BaseLayout title="Analítica y Estadísticas Sísmicas">
+  <div style="margin-bottom: 20px;">
+    <h1 style="font-size: 26px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.5px;">
+      Analítica Sísmica en Tiempo Real
+    </h1>
+    <p style="font-size: 13px; color: var(--tf-text-secondary); margin: 0; font-weight: 500;">
+      Estadísticas avanzadas, patrones de magnitud y desglose técnico de la red de monitoreo sísmico.
+    </p>
+  </div>
+
+  <SeismicAnalytics client:load />
+</BaseLayout>
