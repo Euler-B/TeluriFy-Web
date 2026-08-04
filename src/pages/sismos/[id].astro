@@ -1,0 +1,51 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SismoDetail from '../../components/SismoDetail';
+
+const { id } = Astro.params;
+const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+
+let sismo = null;
+
+// 1. Try single item endpoint
+try {
+  const res = await fetch(`${apiUrl}/v1/sismos/${id}`);
+  if (res.ok) {
+    const json = await res.json();
+    if (json.data && json.data.id) {
+      sismo = json.data;
+    }
+  }
+} catch (e) {
+  // Ignore server fetch error, fallback will attempt list or client-side fetch
+}
+
+// 2. Fallback: if single endpoint returned 404 or failed, search in the sismos list
+if (!sismo) {
+  try {
+    const listRes = await fetch(`${apiUrl}/v1/sismos?per_page=1000`);
+    if (listRes.ok) {
+      const listJson = await listRes.json();
+      const list = listJson.data ?? [];
+      sismo = list.find(
+        (item: any) =>
+          String(item.id) === String(id) ||
+          item.attributes?.external_id === id
+      ) ?? null;
+    }
+  } catch (e) {
+    // Ignore error
+  }
+}
+---
+<BaseLayout title={sismo ? `M ${sismo.attributes.magnitude} · ${sismo.attributes.place}` : `Sismo #${id}`}>
+  <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+    <a href="/" style="font-size: 13px; font-weight: 600; color: var(--tf-text-secondary); text-decoration: none; display: flex; align-items: center; gap: 4px;">
+      <i class="ti ti-arrow-left" style="font-size: 14px;"></i>
+      Volver al mapa
+    </a>
+  </div>
+  <SismoDetail client:only="react" sismoId={String(id)} initialSismo={sismo} />
+</BaseLayout>

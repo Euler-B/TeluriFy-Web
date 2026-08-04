@@ -1,21 +1,19 @@
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-type Sismo = {
+export type Sismo = {
   id: number;
   attributes: {
     title: string;
     place: string;
     magnitude: number;
-    coordinates: {
-      latitude: number;
-      longitude: number;
-    };
+    coordinates: { latitude: number; longitude: number };
     time: string;
   };
+  links?: { external_url?: string };
 };
 
 const INTENSITY_OPTIONS = [
@@ -28,10 +26,10 @@ const INTENSITY_OPTIONS = [
 ];
 
 function magnitudeColor(magnitude: number): string {
-  if (magnitude >= 6.0) return '#FF3B30'; // severo
-  if (magnitude >= 5.0) return '#FF9500'; // fuerte
-  if (magnitude >= 3.0) return '#FFCC00'; // moderado
-  return '#34C759'; // leve
+  if (magnitude >= 6.0) return '#FF3B30';
+  if (magnitude >= 5.0) return '#FF9500';
+  if (magnitude >= 3.0) return '#FFCC00';
+  return '#34C759';
 }
 
 function magnitudeIcon(magnitude: number) {
@@ -64,63 +62,84 @@ function ReportForm({ sismoId }: { sismoId: number }) {
     }
   }
 
-  if (status === 'sent') return <p>¡Gracias por tu reporte!</p>;
+  if (status === 'sent') return <p style={{ margin: 0, color: '#34C759', fontWeight: 600 }}>¡Gracias por tu reporte!</p>;
 
   return (
-    <div>
-      <p>¿Sentiste este sismo?</p>
+    <div style={{ marginTop: 8 }}>
+      <p style={{ margin: '0 0 6px', fontSize: 12, fontWeight: 600 }}>¿Sentiste este sismo?</p>
       <select
         disabled={status === 'sending'}
         defaultValue=""
         onChange={(e) => e.target.value && submitReport(e.target.value)}
+        style={{ fontSize: 12, padding: '4px 6px', borderRadius: 6, border: '1px solid rgba(0,0,0,0.15)', width: '100%' }}
       >
-        <option value="" disabled>
-          Selecciona una intensidad
-        </option>
+        <option value="" disabled>Selecciona intensidad</option>
         {INTENSITY_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
-      {status === 'error' && <p>Hubo un error, intenta de nuevo.</p>}
+      {status === 'error' && <p style={{ margin: '4px 0 0', color: '#FF3B30', fontSize: 11 }}>Hubo un error, intenta de nuevo.</p>}
     </div>
   );
 }
 
-export default function SeismicMap() {
-  const [sismos, setSismos] = useState<Sismo[]>([]);
-  const [loading, setLoading] = useState(true);
+type Props = {
+  sismos: Sismo[];
+};
 
-  useEffect(() => {
-    fetch(`${import.meta.env.PUBLIC_API_URL}/v1/sismos?per_page=1000`)
-      .then((res) => res.json())
-      .then((json) => setSismos(json.data ?? []))
-      .catch(() => setSismos([]))
-      .finally(() => setLoading(false));
-  }, []);
+export default function SeismicMap({ sismos }: Props) {
+  const [minMag, setMinMag] = useState(0);
 
-  if (loading) return <p>Cargando sismos recientes...</p>;
+  const filtered = sismos.filter((s) => s.attributes.magnitude >= minMag);
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 10, fontSize: 11, color: 'var(--tf-text-secondary)', fontWeight: 600 }}>
-        <span><i className="ti ti-point-filled" style={{ color: '#34C759' }} /> Leve</span>
-        <span><i className="ti ti-point-filled" style={{ color: '#FFCC00' }} /> Moderado</span>
-        <span><i className="ti ti-point-filled" style={{ color: '#FF9500' }} /> Fuerte</span>
-        <span><i className="ti ti-point-filled" style={{ color: '#FF3B30' }} /> Severo</span>
+      {/* Filter bar */}
+      <div className="tf-filter-bar">
+        <i className="ti ti-adjustments-horizontal" style={{ fontSize: 14, color: 'var(--tf-accent)' }} />
+        <span>Magnitud mínima:</span>
+        <input
+          type="range"
+          min={0}
+          max={8}
+          step={0.5}
+          value={minMag}
+          onChange={(e) => setMinMag(Number(e.target.value))}
+        />
+        <span
+          style={{
+            fontWeight: 700,
+            color: magnitudeColor(minMag),
+            minWidth: 28,
+            textAlign: 'center',
+          }}
+        >
+          {minMag.toFixed(1)}+
+        </span>
+        <span style={{ marginLeft: 'auto', color: 'var(--tf-text-secondary)' }}>
+          {filtered.length.toLocaleString()} eventos
+        </span>
       </div>
+
+      {/* Legend */}
+      <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 10, fontSize: 11, color: 'var(--tf-text-secondary)', fontWeight: 600 }}>
+        <span><i className="ti ti-point-filled" style={{ color: '#34C759' }} /> Leve (&lt;3.0)</span>
+        <span><i className="ti ti-point-filled" style={{ color: '#FFCC00' }} /> Moderado (3–5)</span>
+        <span><i className="ti ti-point-filled" style={{ color: '#FF9500' }} /> Fuerte (5–6)</span>
+        <span><i className="ti ti-point-filled" style={{ color: '#FF3B30' }} /> Severo (≥6)</span>
+      </div>
+
       <MapContainer
         center={[-15, -70]}
         zoom={3}
-        style={{ height: '500px', width: '100%' }}
+        style={{ height: '500px', width: '100%', borderRadius: 10 }}
       >
         <TileLayer
           attribution='&copy; OpenStreetMap contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <MarkerClusterGroup chunkedLoading>
-          {sismos.map((sismo) => (
+          {filtered.map((sismo) => (
             <Marker
               key={sismo.id}
               position={[
@@ -130,11 +149,21 @@ export default function SeismicMap() {
               icon={magnitudeIcon(sismo.attributes.magnitude)}
             >
               <Popup>
-                <strong>{sismo.attributes.place}</strong>
-                <br />
-                Magnitud: {sismo.attributes.magnitude}
-                <br />
-                <ReportForm sismoId={sismo.id} />
+                <div style={{ minWidth: 180 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>{sismo.attributes.place}</div>
+                  <div style={{ fontSize: 12, color: magnitudeColor(sismo.attributes.magnitude), fontWeight: 700 }}>
+                    M {sismo.attributes.magnitude.toFixed(1)}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#6E6E73', margin: '4px 0 8px' }}>
+                    {new Date(sismo.attributes.time).toLocaleString('es', { dateStyle: 'medium', timeStyle: 'short' })}
+                  </div>
+                  {sismo.links?.external_url && (
+                    <a href={`/sismos/${sismo.id}`} style={{ fontSize: 11, color: '#5856D6', fontWeight: 600, display: 'block', marginBottom: 4 }}>
+                      Ver detalle →
+                    </a>
+                  )}
+                  <ReportForm sismoId={sismo.id} />
+                </div>
               </Popup>
             </Marker>
           ))}
