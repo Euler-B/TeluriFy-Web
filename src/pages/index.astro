@@ -2,6 +2,7 @@
 export const prerender = true;
 
 import BaseLayout from '../layouts/BaseLayout.astro';
+import NotificationOptIn from '../components/NotificationOptIn';
 import { getCollection } from 'astro:content';
 
 const blogPosts = (await getCollection('blog')).slice(0, 2);
@@ -36,6 +37,8 @@ const eduItems = (await getCollection('education')).slice(0, 2);
       </div>
     </div>
   </section>
+
+  <NotificationOptIn client:load />
 
   <!-- Platform Highlights Grid -->
   <section style="margin-bottom: 28px;">
