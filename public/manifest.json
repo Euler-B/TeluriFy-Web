@@ -1,0 +1,9 @@
+{
+  "name": "Telurify",
+  "short_name": "Telurify",
+  "description": "Monitoreo sísmico en tiempo real y percepción ciudadana.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F5F7",
+  "theme_color": "#5856D6"
+}

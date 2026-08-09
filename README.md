@@ -121,6 +121,12 @@ PUBLIC_API_URL=http://localhost:3000
 
 > **Note**: The `PUBLIC_` prefix is required by Astro to expose variables to client-side React islands.
 
+### Firebase Web Notifications
+
+Fill in the `PUBLIC_FIREBASE_*` values with the public Firebase Web App configuration and Web Push certificate key. Firebase configuration values are not secrets, but no project-specific values are committed here. The notification opt-in registers the browser token with `POST ${PUBLIC_API_URL}/v1/devices`.
+
+The manifest currently has no app icon because the repository only contains the favicon. Add platform-sized PNG icons (at least 192x192 and 512x512) to `public/` and reference them from `public/manifest.json` when final branding assets are available.
+
 ---
 
 ## 🧞 NPM Scripts
