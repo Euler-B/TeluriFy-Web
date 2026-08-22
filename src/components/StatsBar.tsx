@@ -1,4 +1,5 @@
 import type { SismoStats, Sismo } from '../services/api';
+import { parseApiDate } from '../utils/date';
 
 type Props = {
   stats?: SismoStats | null;
@@ -143,7 +144,10 @@ export default function StatsBar({ stats, sismos = [] }: Props) {
 
   const now = Date.now();
   const last24h = sismos.filter(
-    (s) => now - new Date(s.attributes.time).getTime() < 86_400_000
+    (s) => {
+      const timestamp = parseApiDate(s.attributes.time)?.getTime();
+      return timestamp !== undefined && now - timestamp < 86_400_000;
+    }
   );
 
   const tsunamis = sismos.filter((s) => s.attributes.tsunami);

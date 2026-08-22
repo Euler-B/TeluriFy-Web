@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { parseApiDate } from '../utils/date';
 
 type Sismo = {
   id: number;
@@ -23,7 +24,9 @@ export default function AlertBanner({ sismos }: { sismos: Sismo[] }) {
   const severe = sismos
     .filter((s) => {
       if (s.attributes.magnitude < 6.0) return false;
-      const age = now - new Date(s.attributes.time).getTime();
+      const timestamp = parseApiDate(s.attributes.time)?.getTime();
+      if (timestamp === undefined) return false;
+      const age = now - timestamp;
       return age >= 0 && age < 86_400_000;
     })
     .sort((a, b) => b.attributes.magnitude - a.attributes.magnitude);

@@ -1,3 +1,5 @@
+import { parseApiDate } from '../utils/date';
+
 export type Sismo = {
   id: number;
   type?: string;
@@ -262,7 +264,7 @@ export async function fetchAllSismos(
 
   // Ensure sismos are sorted descending by time (newest first)
   aggregated.sort(
-    (a, b) => new Date(b.attributes.time).getTime() - new Date(a.attributes.time).getTime()
+    (a, b) => (parseApiDate(b.attributes.time)?.getTime() ?? 0) - (parseApiDate(a.attributes.time)?.getTime() ?? 0)
   );
 
   const paginationInfo = firstRes.pagination

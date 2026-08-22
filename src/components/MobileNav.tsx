@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import ThemeToggle from './ThemeToggle';
 
 const NAV_LINKS = [
@@ -12,9 +13,14 @@ const NAV_LINKS = [
 
 export default function MobileNav() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -77,6 +83,53 @@ export default function MobileNav() {
     hamburgerRef.current?.focus();
   };
 
+  const drawer = (
+    <div
+      className={`tf-mobile-drawer${open ? ' open' : ''}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Menú de navegación"
+    >
+      <div
+        className="tf-mobile-drawer-backdrop"
+        onClick={handleClose}
+      />
+      <div className="tf-mobile-drawer-panel" ref={panelRef}>
+        <button
+          ref={closeButtonRef}
+          className="tf-mobile-drawer-close"
+          aria-label="Cerrar menú"
+          onClick={handleClose}
+        >
+          <i className="ti ti-x" style={{ fontSize: 20 }} />
+        </button>
+        <a
+          href="/"
+          style={{
+            fontSize: 18,
+            fontWeight: 700,
+            color: 'var(--tf-accent)',
+            textDecoration: 'none',
+            borderBottom: 'none',
+            marginBottom: 8,
+          }}
+          onClick={handleClose}
+        >
+          Telurify
+        </a>
+        {NAV_LINKS.map((link) => (
+          <a key={link.href} href={link.href} onClick={handleClose}>
+            <i className={`ti ${link.icon}`} style={{ marginRight: 8, color: 'var(--tf-accent)' }} />
+            {link.label}
+          </a>
+        ))}
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--tf-border)' }}>
+          <ThemeToggle />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <button
@@ -88,51 +141,7 @@ export default function MobileNav() {
       >
         <i className="ti ti-menu-2" style={{ fontSize: 22 }} />
       </button>
-
-      <div
-        className={`tf-mobile-drawer${open ? ' open' : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Menú de navegación"
-      >
-        <div
-          className="tf-mobile-drawer-backdrop"
-          onClick={handleClose}
-        />
-        <div className="tf-mobile-drawer-panel" ref={panelRef}>
-          <button
-            ref={closeButtonRef}
-            className="tf-mobile-drawer-close"
-            aria-label="Cerrar menú"
-            onClick={handleClose}
-          >
-            <i className="ti ti-x" style={{ fontSize: 20 }} />
-          </button>
-          <a
-            href="/"
-            style={{
-              fontSize: 18,
-              fontWeight: 700,
-              color: 'var(--tf-accent)',
-              textDecoration: 'none',
-              borderBottom: 'none',
-              marginBottom: 8,
-            }}
-            onClick={handleClose}
-          >
-            Telurify
-          </a>
-          {NAV_LINKS.map((link) => (
-            <a key={link.href} href={link.href} onClick={handleClose}>
-              <i className={`ti ${link.icon}`} style={{ marginRight: 8, color: 'var(--tf-accent)' }} />
-              {link.label}
-            </a>
-          ))}
-          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--tf-border)' }}>
-            <ThemeToggle />
-          </div>
-        </div>
-      </div>
+      {mounted && createPortal(drawer, document.body)}
     </>
   );
 }
