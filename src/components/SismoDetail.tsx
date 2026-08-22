@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { Sismo } from '../services/api';
 import { submitSismoReport, ApiError } from '../services/api';
 import ShareExportCard from './ShareExportCard';
+import { formatApiDate } from '../utils/date';
 
 const INTENSITY_OPTIONS = [
   { value: 'not_felt', label: 'No lo sentí' },
@@ -235,7 +236,7 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
           <div style={{ fontSize: 13, color: 'var(--tf-text-secondary)', fontWeight: 500, display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span>
               <i className="ti ti-clock" style={{ marginRight: 6, color: 'var(--tf-accent)' }} />
-              {new Date(a.time).toLocaleString('es', { dateStyle: 'full', timeStyle: 'medium' })}
+              {formatApiDate(a.time, true)}
             </span>
             <span>
               <i className="ti ti-map-pin" style={{ marginRight: 6, color: 'var(--tf-accent)' }} />

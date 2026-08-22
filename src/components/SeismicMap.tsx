@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css';
 
 import type { Sismo } from '../services/api';
 import { submitSismoReport, ApiError } from '../services/api';
+import { formatApiDate } from '../utils/date';
 
 const INTENSITY_OPTIONS = [
   { value: 'not_felt', label: 'No lo sentí' },
@@ -208,7 +209,7 @@ function SismoMarkerItem({ sismo }: { sismo: Sismo }) {
             )}
           </div>
           <div style={{ fontSize: 11, color: '#6E6E73', margin: '4px 0 8px' }}>
-            {new Date(sismo.attributes.time).toLocaleString('es', { dateStyle: 'medium', timeStyle: 'short' })}
+            {formatApiDate(sismo.attributes.time)}
           </div>
           <a
             href={`/sismos/${sismo.id}`}
@@ -536,10 +537,7 @@ export default function SeismicMap({ sismos }: Props) {
                         {s.attributes.place}
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--tf-text-secondary)', marginTop: 2 }}>
-                        {new Date(s.attributes.time).toLocaleString('es', {
-                          dateStyle: 'medium',
-                          timeStyle: 'short',
-                        })}
+                        {formatApiDate(s.attributes.time)}
                       </div>
                     </div>
 
