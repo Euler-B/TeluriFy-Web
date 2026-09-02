@@ -408,7 +408,7 @@ export default function SeismicMap({ sismos }: Props) {
             href={`/sismos/${closestSismoInfo.sismo.id}`}
             style={{ color: 'var(--tf-accent)', textDecoration: 'none', fontWeight: 700, fontSize: 11 }}
           >
-            Ver detalle &rarr;
+            Ver detalle
           </a>
         </div>
       )}

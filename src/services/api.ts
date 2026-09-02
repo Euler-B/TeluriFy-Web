@@ -217,6 +217,34 @@ export async function fetchSismosPage(
   };
 }
 
+export async function findSismoById(
+  id: string | number,
+  signal?: AbortSignal
+): Promise<Sismo | null> {
+  const perPage = 1000;
+  const numericId = Number(id);
+  // Database IDs are ordered in the API response, so numeric IDs map directly to a page.
+  let page = Number.isInteger(numericId) && numericId > 0 ? Math.ceil(numericId / perPage) : 1;
+  let total = Infinity;
+
+  while ((page - 1) * perPage < total) {
+    const response = await fetchSismosPage(undefined, page, perPage, signal);
+    total = response.pagination?.total ?? response.data.length;
+
+    const found = response.data.find(
+      (item) => String(item.id) === String(id) || item.attributes?.external_id === String(id)
+    );
+    if (found) return found;
+
+    // Avoid scanning every page for a numeric ID when the API data has changed.
+    if (Number.isInteger(numericId) && numericId > 0) return null;
+    if (response.data.length === 0) break;
+    page++;
+  }
+
+  return null;
+}
+
 export async function fetchAllSismos(
   filters?: SismoFilters,
   signal?: AbortSignal

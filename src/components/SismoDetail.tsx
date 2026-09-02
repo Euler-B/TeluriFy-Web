@@ -126,42 +126,20 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
     let active = true;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
     setLoading(true);
 
     async function loadSismo() {
       try {
-        const PER_PAGE = 1000;
-        let page = 1;
-        let total = Infinity;
-
-        while ((page - 1) * PER_PAGE < total) {
-          const res = await fetch(
-            `${apiUrl}/v1/sismos?per_page=${PER_PAGE}&page=${page}`,
-            { signal: controller.signal }
-          );
-          if (!active) return;
-          if (!res.ok) { if (active) setError(true); break; }
-          const json = await res.json();
-          if (!active) return;
-          if (!Array.isArray(json.data)) { if (active) setError(true); break; }
-
-          total = json.pagination?.total ?? json.data.length;
-
-          const found: Sismo | undefined = json.data.find(
-            (item: Sismo) =>
-              String(item.id) === String(sismoId) ||
-              item.attributes?.external_id === sismoId
-          );
-          if (found) {
-            if (active) { setSismo(found); setError(false); }
-            break;
-          }
-          if (page * PER_PAGE >= total) {
-            if (active) setError(true);
-            break;
-          }
-          page++;
+        // Use the web origin so mobile devices never resolve the API host as localhost.
+        const response = await fetch(
+          `/api/sismos/${encodeURIComponent(sismoId)}`,
+          { signal: controller.signal }
+        );
+        const json = response.ok ? await response.json() : null;
+        const found: Sismo | null = json?.data ?? null;
+        if (active) {
+          setSismo(found);
+          setError(!found);
         }
       } catch {
         if (active) setError(true);
