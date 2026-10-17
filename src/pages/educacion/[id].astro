@@ -12,9 +12,16 @@ export async function getStaticPaths() {
 const { lesson } = Astro.props;
 const { Content } = await render(lesson);
 ---
-<BaseLayout title={lesson.data.title}>
-  <article>
-    <h1>{lesson.data.title}</h1>
+<BaseLayout title={lesson.data.title} description={lesson.data.description}>
+  <article class="tf-prose">
+    <div class="tf-editorial-meta" style="margin-bottom: 12px;">
+      <span class="tf-editorial-tag">Educación</span>
+      <span>Nivel {lesson.data.level}</span>
+      <span class="tf-mono">Lección {lesson.data.order}</span>
+    </div>
+    <h1 style="font-size: 28px; margin: 0 0 20px;">{lesson.data.title}</h1>
     <Content />
+    <hr />
+    <a href="/educacion" class="tf-button-secondary">Volver a educación</a>
   </article>
 </BaseLayout>

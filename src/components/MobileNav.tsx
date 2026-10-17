@@ -64,7 +64,7 @@ export default function MobileNav() {
   }, [open]);
 
   useEffect(() => {
-    const mq = window.matchMedia('(min-width: 641px)');
+    const mq = window.matchMedia('(min-width: 761px)');
     const handleChange = (e: MediaQueryListEvent) => {
       if (e.matches) {
         if (open && panelRef.current?.contains(document.activeElement)) {
@@ -101,29 +101,23 @@ export default function MobileNav() {
           aria-label="Cerrar menú"
           onClick={handleClose}
         >
-          <i className="ti ti-x" style={{ fontSize: 20 }} />
+          <i className="ti ti-x" style={{ fontSize: 20 }} aria-hidden="true" />
         </button>
         <a
           href="/"
-          style={{
-            fontSize: 18,
-            fontWeight: 700,
-            color: 'var(--tf-accent)',
-            textDecoration: 'none',
-            borderBottom: 'none',
-            marginBottom: 8,
-          }}
+          className="tf-nav-logo"
+          style={{ borderBottom: 'none', marginBottom: 8 }}
           onClick={handleClose}
         >
           Telurify
         </a>
         {NAV_LINKS.map((link) => (
           <a key={link.href} href={link.href} onClick={handleClose}>
-            <i className={`ti ${link.icon}`} style={{ marginRight: 8, color: 'var(--tf-accent)' }} />
+            <i className={`ti ${link.icon}`} style={{ marginRight: 10, color: 'var(--signal-cyan)' }} aria-hidden="true" />
             {link.label}
           </a>
         ))}
-        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--tf-border)' }}>
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
           <ThemeToggle />
         </div>
       </div>
@@ -139,7 +133,7 @@ export default function MobileNav() {
         aria-expanded={open}
         onClick={() => setOpen(true)}
       >
-        <i className="ti ti-menu-2" style={{ fontSize: 22 }} />
+        <i className="ti ti-menu-2" style={{ fontSize: 22 }} aria-hidden="true" />
       </button>
       {mounted && createPortal(drawer, document.body)}
     </>

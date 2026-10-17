@@ -195,7 +195,7 @@ export default function FilterPanel({
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: '#FF3B30',
+                color: 'var(--alert-coral)',
                 fontSize: 12,
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -240,7 +240,7 @@ export default function FilterPanel({
           onChange={(e) => handleMagMinChange(Number(e.target.value))}
           style={{ accentColor: 'var(--tf-accent)', flex: 1, maxWidth: 200 }}
         />
-        <span style={{ fontWeight: 700, color: 'var(--tf-text)', minWidth: 32 }}>
+        <span className="tf-mono" style={{ fontWeight: 600, color: 'var(--tf-text)', minWidth: 32 }}>
           {magMin.toFixed(1)}+
         </span>
       </div>
@@ -372,7 +372,7 @@ export default function FilterPanel({
                       textTransform: 'uppercase',
                       border: isSelected ? '1px solid var(--tf-accent)' : '1px solid var(--tf-border)',
                       background: isSelected ? 'var(--tf-accent)' : 'var(--tf-bg)',
-                      color: isSelected ? '#ffffff' : 'var(--tf-text)',
+                      color: isSelected ? 'var(--on-signal)' : 'var(--tf-text)',
                       cursor: 'pointer',
                       transition: 'all 0.12s',
                     }}
@@ -393,9 +393,9 @@ export default function FilterPanel({
             marginTop: 10,
             padding: '8px 12px',
             borderRadius: 8,
-            background: '#FF950018',
-            border: '1px solid #FF950040',
-            color: '#D97706',
+            background: 'color-mix(in srgb, var(--warning-amber) 12%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--warning-amber) 40%, transparent)',
+            color: 'var(--warning-amber)',
             fontSize: 12,
             fontWeight: 600,
             display: 'flex',

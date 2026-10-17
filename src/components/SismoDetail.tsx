@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import type { Sismo } from '../services/api';
 import { submitSismoReport, ApiError } from '../services/api';
+import type { AlertLevel } from '../utils/seismic';
+import { formatDepth, formatMagnitude, getSeismicStatus } from '../utils/seismic';
 import ShareExportCard from './ShareExportCard';
-import { formatApiDate } from '../utils/date';
+import { formatEventDateWithZone } from '../utils/date';
 
 const INTENSITY_OPTIONS = [
   { value: 'not_felt', label: 'No lo sentí' },
@@ -12,20 +14,6 @@ const INTENSITY_OPTIONS = [
   { value: 'strong', label: 'Fuerte' },
   { value: 'severe', label: 'Severo' },
 ];
-
-function magnitudeColor(mag: number) {
-  if (mag >= 6.0) return '#FF3B30';
-  if (mag >= 5.0) return '#FF9500';
-  if (mag >= 3.0) return '#FFCC00';
-  return '#34C759';
-}
-
-function magnitudeLabel(mag: number) {
-  if (mag >= 6.0) return 'Severo';
-  if (mag >= 5.0) return 'Fuerte';
-  if (mag >= 3.0) return 'Moderado';
-  return 'Leve';
-}
 
 function ReportForm({ sismoId }: { sismoId: number }) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error' | 'rate_limited'>('idle');
@@ -50,8 +38,8 @@ function ReportForm({ sismoId }: { sismoId: number }) {
 
   if (status === 'sent') {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#34C759', fontWeight: 700, fontSize: 14 }}>
-        <i className="ti ti-circle-check-filled" style={{ fontSize: 18 }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--signal-green)', fontWeight: 700, fontSize: 14 }}>
+        <i className="ti ti-circle-check-filled" style={{ fontSize: 18 }} aria-hidden="true" />
         ¡Gracias por tu reporte ciudadano!
       </div>
     );
@@ -66,34 +54,15 @@ function ReportForm({ sismoId }: { sismoId: number }) {
             key={opt.value}
             disabled={status === 'sending'}
             onClick={() => submitReport(opt.value)}
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              padding: '7px 14px',
-              borderRadius: 8,
-              border: '1px solid var(--tf-border)',
-              background: 'var(--tf-bg)',
-              cursor: 'pointer',
-              color: 'var(--tf-text)',
-              transition: 'background 0.12s, border-color 0.12s',
-            }}
-            onMouseEnter={(e) => {
-              (e.target as HTMLButtonElement).style.background = 'var(--tf-accent)';
-              (e.target as HTMLButtonElement).style.color = '#fff';
-              (e.target as HTMLButtonElement).style.borderColor = 'var(--tf-accent)';
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLButtonElement).style.background = 'var(--tf-bg)';
-              (e.target as HTMLButtonElement).style.color = 'var(--tf-text)';
-              (e.target as HTMLButtonElement).style.borderColor = 'var(--tf-border)';
-            }}
+            className="tf-button-secondary"
+            style={{ fontSize: 12, padding: '8px 14px' }}
           >
             {opt.label}
           </button>
         ))}
       </div>
       {(status === 'error' || status === 'rate_limited') && (
-        <p style={{ margin: '8px 0 0', color: '#FF3B30', fontSize: 12, fontWeight: 600 }}>
+        <p style={{ margin: '8px 0 0', color: 'var(--alert-coral)', fontSize: 12, fontWeight: 600 }}>
           {errorMessage}
         </p>
       )}
@@ -110,7 +79,7 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
   const [sismo, setSismo] = useState<Sismo | null>(initialSismo ?? null);
   const [loading, setLoading] = useState(!initialSismo);
   const [error, setError] = useState(false);
-  const [MiniMap, setMiniMap] = useState<React.ComponentType<{ lat: number; lng: number; color: string }> | null>(null);
+  const [MiniMap, setMiniMap] = useState<React.ComponentType<{ lat: number; lng: number; level: AlertLevel }> | null>(null);
 
   useEffect(() => {
     import('./SismoMiniMap').then((mod) => setMiniMap(() => mod.default));
@@ -130,7 +99,7 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
 
     async function loadSismo() {
       try {
-        // Use the web origin so mobile devices never resolve the API host as localhost.
+        // Usar el origen web para que los móviles nunca resuelvan el host del API como localhost.
         const response = await fetch(
           `/api/sismos/${encodeURIComponent(sismoId)}`,
           { signal: controller.signal }
@@ -159,9 +128,13 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
 
   if (loading) {
     return (
-      <div className="tf-card" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--tf-text-secondary)' }}>
-        <i className="ti ti-loader-2" style={{ fontSize: 24, animation: 'spin 1s linear infinite', display: 'block', margin: '0 auto 12px' }} />
-        Cargando detalles del sismo #{sismoId}...
+      <div className="tf-loading" role="status">
+        <div className="tf-loading-rings" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+        <div className="tf-loading-text">Cargando evento #{sismoId}…</div>
       </div>
     );
   }
@@ -169,12 +142,12 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
   if (error || !sismo) {
     return (
       <div className="tf-card" style={{ textAlign: 'center', padding: '48px 24px' }}>
-        <i className="ti ti-seismograph" style={{ fontSize: 40, color: 'var(--tf-text-secondary)', display: 'block', marginBottom: 12 }} />
+        <i className="ti ti-seismograph" style={{ fontSize: 40, color: 'var(--text-secondary)', display: 'block', marginBottom: 12 }} aria-hidden="true" />
         <h1 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px' }}>Sismo no encontrado</h1>
-        <p style={{ fontSize: 14, color: 'var(--tf-text-secondary)', fontWeight: 500, margin: '0 0 20px' }}>
-          El evento sísmico con ID <code>{sismoId}</code> no fue encontrado en los datos actuales.
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500, margin: '0 0 20px' }}>
+          El evento sísmico con ID <code className="tf-mono">{sismoId}</code> no fue encontrado en los datos actuales.
         </p>
-        <a href="/mapa" className="tf-button-secondary" style={{ padding: '8px 16px', fontSize: 13, textDecoration: 'none', display: 'inline-block' }}>
+        <a href="/mapa" className="tf-button-secondary">
           Volver al mapa
         </a>
       </div>
@@ -182,53 +155,57 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
   }
 
   const { attributes: a, links } = sismo;
-  const color = magnitudeColor(a.magnitude);
+  const status = getSeismicStatus(a.magnitude, a.tsunami);
   const lat = a.coordinates.latitude;
   const lng = a.coordinates.longitude;
 
   return (
     <div style={{ display: 'grid', gap: 16 }}>
-      {/* Header card */}
-      <div className="tf-card" style={{ display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap' }}>
+      {/* Tarjeta de encabezado */}
+      <div className="tf-card" style={{ display: 'flex', alignItems: 'flex-start', gap: 24, flexWrap: 'wrap' }}>
         <div
           style={{
-            background: `${color}18`,
-            border: `2px solid ${color}`,
-            borderRadius: 16,
+            background: `color-mix(in srgb, ${status.colorVar} 14%, transparent)`,
+            border: `2px solid ${status.colorVar}`,
+            borderRadius: 14,
             padding: '12px 20px',
             textAlign: 'center',
-            minWidth: 90,
+            minWidth: 100,
           }}
         >
-          <div style={{ fontSize: 32, fontWeight: 700, color, letterSpacing: -1 }}>
-            M {a.magnitude.toFixed(1)}
+          <div className="tf-mono" style={{ fontSize: 30, fontWeight: 600, color: status.colorVar, letterSpacing: -1 }}>
+            M {formatMagnitude(a.magnitude)}
           </div>
-          <div style={{ fontSize: 11, fontWeight: 700, color, marginTop: 2 }}>
-            {magnitudeLabel(a.magnitude)}
+          <div style={{ marginTop: 4 }}>
+            <span className={status.chipClass}>{status.label}</span>
           </div>
         </div>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 700, letterSpacing: -0.3 }}>
+        <div style={{ flex: 1, minWidth: 240 }}>
+          <h1 style={{ margin: '0 0 10px', fontSize: 20, fontWeight: 700, letterSpacing: -0.3 }}>
             {a.place}
           </h1>
-          <div style={{ fontSize: 13, color: 'var(--tf-text-secondary)', fontWeight: 500, display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span>
-              <i className="ti ti-clock" style={{ marginRight: 6, color: 'var(--tf-accent)' }} />
-              {formatApiDate(a.time, true)}
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span title="Hora del evento en tu zona horaria">
+              <i className="ti ti-clock" style={{ marginRight: 6, color: 'var(--signal-cyan)' }} aria-hidden="true" />
+              <span className="tf-mono" style={{ fontSize: 12.5 }}>{formatEventDateWithZone(a.time, true)}</span>
             </span>
             <span>
-              <i className="ti ti-map-pin" style={{ marginRight: 6, color: 'var(--tf-accent)' }} />
-              {lat.toFixed(4)}°, {lng.toFixed(4)}°
+              <i className="ti ti-arrow-down" style={{ marginRight: 6, color: 'var(--signal-cyan)' }} aria-hidden="true" />
+              Profundidad: <span className="tf-mono" style={{ fontSize: 12.5 }}>{formatDepth(a.depth)}</span>
+            </span>
+            <span>
+              <i className="ti ti-map-pin" style={{ marginRight: 6, color: 'var(--signal-cyan)' }} aria-hidden="true" />
+              <span className="tf-mono" style={{ fontSize: 12.5 }}>{lat.toFixed(4)}°, {lng.toFixed(4)}°</span>
             </span>
             {a.mag_type && (
               <span>
-                <i className="ti ti-tag" style={{ marginRight: 6, color: 'var(--tf-accent)' }} />
-                Tipo: {a.mag_type.toUpperCase()}
+                <i className="ti ti-tag" style={{ marginRight: 6, color: 'var(--signal-cyan)' }} aria-hidden="true" />
+                Tipo de magnitud: <span className="tf-mono" style={{ fontSize: 12.5, textTransform: 'uppercase' }}>{a.mag_type}</span>
               </span>
             )}
             {a.tsunami && (
-              <span style={{ color: '#FF3B30', fontWeight: 700 }}>
-                <i className="ti ti-waves" style={{ marginRight: 6 }} />
+              <span style={{ color: 'var(--alert-coral)', fontWeight: 700 }}>
+                <i className="ti ti-waves" style={{ marginRight: 6 }} aria-hidden="true" />
                 Alerta de tsunami asociada
               </span>
             )}
@@ -239,7 +216,7 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               className="tf-button-secondary"
-              style={{ marginTop: 14, fontSize: 12, display: 'inline-block' }}
+              style={{ marginTop: 16, fontSize: 12 }}
             >
               Ver en USGS
             </a>
@@ -247,23 +224,23 @@ export default function SismoDetail({ sismoId, initialSismo }: Props) {
         </div>
       </div>
 
-      {/* Mini map */}
+      {/* Mini mapa */}
       {MiniMap ? (
-        <MiniMap lat={lat} lng={lng} color={color} />
+        <MiniMap lat={lat} lng={lng} level={status.level} />
       ) : (
-        <div className="tf-card" style={{ height: 320, background: 'var(--tf-bg)' }} />
+        <div className="tf-card" style={{ height: 320, background: 'var(--background)' }} />
       )}
 
-      {/* Report card */}
+      {/* Tarjeta de reporte */}
       <div className="tf-card">
-        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <i className="ti ti-message-report" style={{ color: 'var(--tf-accent)', fontSize: 17 }} />
+        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <i className="ti ti-message-report" style={{ color: 'var(--signal-cyan)', fontSize: 17 }} aria-hidden="true" />
           Reportar percepción ciudadana
         </div>
         <ReportForm sismoId={sismo.id} />
       </div>
 
-      {/* Share and Export card */}
+      {/* Compartir y exportar */}
       <ShareExportCard sismo={sismo} />
     </div>
   );

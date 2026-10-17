@@ -3,21 +3,49 @@ export const prerender = true;
 
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { formatShortDate } from '../../utils/date';
 
 const items = (await getCollection('news'))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---
 <BaseLayout title="Noticias">
-  <h1>Noticias</h1>
-  {items.length === 0 && <p>Aún no hay noticias cargadas.</p>}
-  <ul>
-    {items.map((item) => (
-      <li>
-        <a href={item.data.sourceUrl} target="_blank" rel="noopener">
-          {item.data.title}
+  <div class="tf-section-head">
+    <div>
+      <span class="tf-eyebrow">
+        <i class="ti ti-news" aria-hidden="true" style="font-size: 14px;"></i>
+        Actualidad
+      </span>
+      <h1 class="tf-section-title" style="font-size: 26px; margin-top: 8px;">Noticias</h1>
+      <p class="tf-section-sub">
+        Fuentes externas verificadas sobre actividad telúrica y prevención sísmica.
+      </p>
+    </div>
+  </div>
+
+  {items.length === 0 ? (
+    <div class="tf-empty-state">
+      Aún no hay noticias externas cargadas. Mientras tanto, consulta la actividad en vivo en el
+      <a href="/mapa"> mapa interactivo</a>.
+    </div>
+  ) : (
+    <div class="tf-editorial-grid">
+      {items.map((item) => (
+        <a
+          class="tf-editorial-card"
+          href={item.data.sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <div class="tf-editorial-meta">
+            <span class="tf-editorial-tag">{item.data.category}</span>
+            <span class="tf-mono">{formatShortDate(item.data.pubDate)}</span>
+            <span aria-hidden="true">·</span>
+            <span>{item.data.sourceName}</span>
+          </div>
+          <h2 class="tf-editorial-title">{item.data.title}</h2>
+          <p class="tf-editorial-desc">{item.data.description}</p>
         </a>
-        <p>{item.data.description} — {item.data.sourceName}</p>
-      </li>
-    ))}
-  </ul>
+      ))}
+    </div>
+  )}
 </BaseLayout>

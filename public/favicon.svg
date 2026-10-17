@@ -1,18 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
-  <!-- Fondo redondeado con el color índigo de marca -->
-  <rect width="128" height="128" rx="28" fill="#5856D6"/>
-  
-  <!-- Anillos concéntricos de ondas sísmicas -->
-  <circle cx="64" cy="64" r="46" stroke="#FFFFFF" stroke-opacity="0.15" stroke-width="2.5"/>
-  <circle cx="64" cy="64" r="34" stroke="#FFFFFF" stroke-opacity="0.25" stroke-width="2.5"/>
-  
-  <!-- Trazo sismográfico (onda de pulso sísmico) -->
-  <path d="M 18 64 L 38 64 L 46 44 L 54 84 L 64 24 L 74 104 L 82 48 L 90 74 L 98 64 L 110 64" 
-        stroke="#FFFFFF" 
-        stroke-width="7" 
-        stroke-linecap="round" 
-        stroke-linejoin="round"/>
-        
-  <!-- Epicentro / Punto de mayor pico -->
-  <circle cx="64" cy="24" r="5.5" fill="#FF3B30" stroke="#FFFFFF" stroke-width="2.5"/>
+  <rect width="128" height="128" rx="28" fill="#071321"/>
+  <g transform="translate(16 16) scale(1.5)">
+    <circle cx="32" cy="32" r="21" stroke="#3E6178" stroke-width="2.5" fill="none"/>
+    <path d="M6 33 L13 33 L18 24 L23 42 L31 14 L39 48 L44 26 L50 33 L57 33" stroke="#38D9E8" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="32" cy="32" r="3.5" fill="#E8F1F7"/>
+  </g>
 </svg>

@@ -48,7 +48,7 @@ graph TD
 - 🔔 **Significant Earthquake Alert Banner**: Automatic banner highlighting events of magnitude ≥ 6.0 within the last 24 hours.
 - 📖 **Seismic Event Detail Page (`/sismos/[id]`)**: SSR-powered route with centered epicenter mini-map and citizen intensity report form.
 - 📚 **Content Collections (Content Layer API)**: Markdown-driven static collections for Blog, Seismic Education, and Regional News.
-- 📱 **macOS-Inspired Light Theme**: Clean UI, Manrope typography, subtle borders, functional color scaling, and responsive drawer navigation for mobile devices.
+- 🌗 **Observatory Visual System**: Dark-first theme with design tokens (`--signal-cyan`, `--alert-coral`, …), DM Sans + IBM Plex Mono typography, accessible light/dark toggle, and responsive drawer navigation.
 
 ---
 
@@ -58,7 +58,7 @@ graph TD
 - **UI & Islands**: [React 19](https://react.dev/)
 - **Mapping**: [Leaflet](https://leafletjs.com/) + [React Leaflet Cluster](https://github.com/akiran/react-leaflet-cluster)
 - **Styling**: Vanilla CSS with native CSS variables and design tokens
-- **Typography & Icons**: Google Fonts (Manrope) + Tabler Icons
+- **Typography & Icons**: Google Fonts (DM Sans + IBM Plex Mono) + Tabler Icons
 
 ---
 
@@ -125,7 +125,7 @@ PUBLIC_API_URL=http://localhost:3000
 
 Fill in the `PUBLIC_FIREBASE_*` values with the public Firebase Web App configuration and Web Push certificate key. Firebase configuration values are not secrets, but no project-specific values are committed here. The notification opt-in registers the browser token with `POST ${PUBLIC_API_URL}/v1/devices`.
 
-The manifest currently has no app icon because the repository only contains the favicon. Add platform-sized PNG icons (at least 192x192 and 512x512) to `public/` and reference them from `public/manifest.json` when final branding assets are available.
+The manifest references the platform-sized PNG icons generated from the brand symbol (`public/brand/`). If the symbol changes, regenerate the PNG exports (48/180/192/512 + maskable 512) from the SVG sources.
 
 ---
 

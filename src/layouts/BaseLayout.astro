@@ -5,51 +5,84 @@ import ThemeToggle from '../components/ThemeToggle';
 
 interface Props {
   title: string;
+  description?: string;
 }
-const { title } = Astro.props;
+
+const { title, description = 'Monitoreo sísmico en tiempo real, percepción ciudadana y contexto geográfico.' } = Astro.props;
+
+const path = Astro.url.pathname;
+const NAV_LINKS = [
+  { href: '/', label: 'Inicio' },
+  { href: '/mapa', label: 'Mapa' },
+  { href: '/analitica', label: 'Analítica' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/educacion', label: 'Educación' },
+  { href: '/noticias', label: 'Noticias' },
+];
+
+function isCurrent(href: string): boolean {
+  if (href === '/') return path === '/';
+  return path.startsWith(href);
+}
 ---
 <!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#071321" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/brand/telurify-symbol-180.png" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Telurify" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
     <title>{title} · Telurify</title>
     <script is:inline>
-      // Avoid flash of unstyled theme on SSR load
+      // Evitar el flash de tema incorrecto en la carga SSR (oscuro por defecto)
       const rawTheme = localStorage.getItem('tf-theme');
       const validSaved = (rawTheme === 'light' || rawTheme === 'dark') ? rawTheme : null;
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const theme = validSaved || (systemPrefersDark ? 'dark' : 'light');
-      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('data-theme', validSaved || 'dark');
     </script>
   </head>
   <body>
-    <header class="tf-site-header" style="border-bottom: 1px solid var(--tf-border); background: var(--tf-header-bg); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 50; transition: background 0.2s ease;">
-      <nav class="tf-nav">
+    <header class="tf-site-header">
+      <nav class="tf-nav" aria-label="Navegación principal">
         <a href="/" class="tf-nav-logo">Telurify</a>
         <div class="tf-nav-links">
-          <a href="/">Inicio</a>
-          <a href="/mapa">Mapa</a>
-          <a href="/analitica">Analítica</a>
-          <a href="/blog">Blog</a>
-          <a href="/educacion">Educación</a>
-          <a href="/noticias">Noticias</a>
-          <ThemeToggle client:load />
+          {NAV_LINKS.map((link) => (
+            <a href={link.href} aria-current={isCurrent(link.href) ? 'page' : undefined}>
+              {link.label}
+            </a>
+          ))}
         </div>
-        <MobileNav client:load />
+        <div class="tf-nav-actions">
+          <a href="/#tf-alertas" class="tf-bell-button">
+            <i class="ti ti-bell-ringing" aria-hidden="true"></i>
+            <span>Activar alertas</span>
+          </a>
+          <ThemeToggle client:load />
+          <MobileNav client:load />
+        </div>
       </nav>
     </header>
-    <main style="max-width: 1100px; margin: 0 auto; padding: 24px 24px 48px;">
+    <main class="tf-main">
       <slot />
     </main>
-    <footer style="text-align: center; padding: 20px 24px 28px; color: var(--tf-text-secondary); font-size: 12px; font-weight: 600;">
-      Hecho con ❤️ y Astro
+    <footer class="tf-footer">
+      <div class="tf-footer-inner">
+        <span class="tf-footer-brand-name">Telurify</span>
+        <span class="tf-footer-tag">Datos que te ayudan a cuidar lo que importa.</span>
+        <span class="tf-footer-meta">
+          <a href="https://github.com/Euler-B/telurify-web" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <span aria-hidden="true">·</span>
+          <span>© 2026 Telurify</span>
+        </span>
+      </div>
     </footer>
   </body>
 </html>

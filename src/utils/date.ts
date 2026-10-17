@@ -47,3 +47,50 @@ export function formatApiDate(value: string, includeWeekday = false): string {
     ...(includeWeekday ? { weekday: 'long' } : {}),
   }).format(date);
 }
+
+export function formatEventDateWithZone(value: string, includeWeekday = false): string {
+  const date = parseApiDate(value);
+  if (!date) return 'Fecha no disponible';
+
+  return new Intl.DateTimeFormat('es-ES', {
+    ...DATE_TIME_OPTIONS,
+    timeZoneName: 'short',
+    ...(includeWeekday ? { weekday: 'long' } : {}),
+  }).format(date);
+}
+
+export function formatShortDate(value: string | Date): string {
+  const date = value instanceof Date ? value : parseApiDate(value);
+  if (!date) return 'Fecha no disponible';
+
+  return new Intl.DateTimeFormat('es-ES', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+}
+
+export function formatRelativeEs(value: string | Date): string {
+  const date = value instanceof Date ? value : parseApiDate(value);
+  if (!date) return 'Fecha no disponible';
+
+  const diffMs = date.getTime() - Date.now();
+  const diffMinutes = Math.round(diffMs / 60_000);
+  const absMinutes = Math.abs(diffMinutes);
+  const relative = new Intl.RelativeTimeFormat('es-ES', { numeric: 'auto' });
+
+  let text: string;
+  if (absMinutes < 1) {
+    text = 'Ahora mismo';
+  } else if (absMinutes < 60) {
+    text = relative.format(diffMinutes, 'minute');
+  } else if (absMinutes < 60 * 24) {
+    text = relative.format(Math.round(diffMs / 3_600_000), 'hour');
+  } else if (absMinutes < 60 * 24 * 30) {
+    text = relative.format(Math.round(diffMs / 86_400_000), 'day');
+  } else {
+    text = formatShortDate(date);
+  }
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}

@@ -7,6 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import type { Sismo } from '../services/api';
 import { submitSismoReport, ApiError } from '../services/api';
 import { formatApiDate } from '../utils/date';
+import { formatDepth, formatMagnitude, getSeismicStatus } from '../utils/seismic';
 
 const INTENSITY_OPTIONS = [
   { value: 'not_felt', label: 'No lo sentí' },
@@ -17,22 +18,13 @@ const INTENSITY_OPTIONS = [
   { value: 'severe', label: 'Severo' },
 ];
 
-function magnitudeColor(magnitude: number): string {
-  const m = Number(magnitude) || 0;
-  if (m >= 6.0) return '#FF3B30';
-  if (m >= 5.0) return '#FF9500';
-  if (m >= 3.0) return '#FFCC00';
-  return '#34C759';
-}
-
-function magnitudeIcon(magnitude: number) {
+function magnitudeIcon(magnitude: number, tsunami?: boolean) {
   const magNum = Number(magnitude) || 0;
-  const color = magnitudeColor(magNum);
+  const status = getSeismicStatus(magNum, tsunami);
   const size = Math.min(22 + magNum * 2.5, 44);
-  const magText = magNum.toFixed(1);
   return L.divIcon({
     className: '',
-    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color}E6;border:2px solid #FFFFFF;box-shadow:0 2px 8px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#FFFFFF;line-height:1;letter-spacing:-0.5px;">${magText}</div>`,
+    html: `<div class="tf-marker ${status.bgClass}" style="width:${size}px;height:${size}px;">${magNum.toFixed(1)}</div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   });
@@ -41,15 +33,15 @@ function magnitudeIcon(magnitude: number) {
 function userLocationIcon() {
   return L.divIcon({
     className: '',
-    html: `<div style="width:22px;height:22px;border-radius:50%;background:#007AFF;border:3px solid #FFFFFF;box-shadow:0 0 12px rgba(0,122,255,0.85);"></div>`,
-    iconSize: [22, 22],
-    iconAnchor: [11, 11],
+    html: `<div style="width:20px;height:20px;border-radius:50%;background:var(--signal-cyan);border:3px solid var(--surface);box-shadow:0 0 12px color-mix(in srgb, var(--signal-cyan) 80%, transparent);"></div>`,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
   });
 }
 
-// Haversine formula to compute distance in km
+// Distancia Haversine en km
 function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Earth radius in km
+  const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
@@ -102,7 +94,9 @@ function MapResizer() {
   }, [map]);
 
   return null;
-}// Auto-adjust map bounds whenever the sismos dataset changes or filters apply
+}
+
+// Ajusta los límites del mapa cuando cambia el conjunto de sismos o los filtros
 function MapBoundsFitter({ sismos, userPos }: { sismos: Sismo[]; userPos: [number, number] | null }) {
   const map = useMap();
 
@@ -151,7 +145,13 @@ function ReportForm({ sismoId }: { sismoId: number }) {
     }
   }
 
-  if (status === 'sent') return <p style={{ margin: 0, color: '#34C759', fontWeight: 600 }}>¡Gracias por tu reporte!</p>;
+  if (status === 'sent') {
+    return (
+      <p style={{ margin: 0, color: 'var(--signal-green)', fontWeight: 600, fontSize: 12 }}>
+        ¡Gracias por tu reporte!
+      </p>
+    );
+  }
 
   return (
     <div style={{ marginTop: 8 }}>
@@ -164,7 +164,17 @@ function ReportForm({ sismoId }: { sismoId: number }) {
           setSelectedValue(val);
           if (val) submitReport(val);
         }}
-        style={{ fontSize: 12, padding: '4px 6px', borderRadius: 6, border: '1px solid rgba(0,0,0,0.15)', width: '100%' }}
+        aria-label="Intensidad percibida del sismo"
+        style={{
+          fontSize: 12,
+          padding: '6px 8px',
+          borderRadius: 8,
+          border: '1px solid var(--border)',
+          background: 'var(--background)',
+          color: 'var(--text-primary)',
+          width: '100%',
+          minHeight: 36,
+        }}
       >
         <option value="" disabled>Selecciona intensidad</option>
         {INTENSITY_OPTIONS.map((opt) => (
@@ -172,7 +182,7 @@ function ReportForm({ sismoId }: { sismoId: number }) {
         ))}
       </select>
       {(status === 'error' || status === 'rate_limited') && (
-        <p style={{ margin: '4px 0 0', color: '#FF3B30', fontSize: 11 }}>{errorMessage}</p>
+        <p style={{ margin: '4px 0 0', color: 'var(--alert-coral)', fontSize: 11 }}>{errorMessage}</p>
       )}
     </div>
   );
@@ -185,36 +195,50 @@ function SismoMarkerItem({ sismo }: { sismo: Sismo }) {
   const lng = Number(sismo.attributes.coordinates.longitude);
   const magRaw = Number(sismo.attributes.magnitude);
   const mag = isNaN(magRaw) ? 0 : magRaw;
+  const status = getSeismicStatus(mag, sismo.attributes.tsunami);
 
   if (!isValidCoordinate(lat, lng)) return null;
 
   return (
     <Marker
       position={[lat, lng]}
-      icon={magnitudeIcon(mag)}
+      icon={magnitudeIcon(mag, sismo.attributes.tsunami)}
       eventHandlers={{
         popupopen: () => setIsOpen(true),
         popupclose: () => setIsOpen(false),
       }}
     >
       <Popup>
-        <div style={{ minWidth: 180 }}>
-          <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>{sismo.attributes.place}</div>
-          <div style={{ fontSize: 12, color: magnitudeColor(mag), fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span>M {mag.toFixed(1)}</span>
-            {sismo.attributes.tsunami && (
-              <span style={{ color: '#FF3B30', fontSize: 11 }} title="Alerta de Tsunami">
-                <i className="ti ti-waves" style={{ marginRight: 2 }} /> Tsunami
-              </span>
-            )}
+        <div style={{ minWidth: 200 }}>
+          <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>{sismo.attributes.place}</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+            <span className="tf-mono" style={{ fontSize: 14, fontWeight: 600, color: status.colorVar }}>
+              M {formatMagnitude(mag)}
+            </span>
+            <span className={status.chipClass}>{status.label}</span>
           </div>
-          <div style={{ fontSize: 11, color: '#6E6E73', margin: '4px 0 8px' }}>
-            {formatApiDate(sismo.attributes.time)}
+          <div className="tf-mono" style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'grid', gap: 2, marginBottom: 8 }}>
+            <span title="Hora del evento (tu zona horaria)">{formatApiDate(sismo.attributes.time)}</span>
+            <span>Prof. {formatDepth(sismo.attributes.depth)}</span>
+            <span>{lat.toFixed(3)}°, {lng.toFixed(3)}°</span>
+            {sismo.attributes.mag_type && <span style={{ textTransform: 'uppercase' }}>{sismo.attributes.mag_type}</span>}
           </div>
+          {sismo.attributes.tsunami && (
+            <div style={{ color: 'var(--alert-coral)', fontSize: 11, fontWeight: 700, marginBottom: 6 }}>
+              <i className="ti ti-waves" style={{ marginRight: 4 }} aria-hidden="true" /> Alerta de tsunami asociada
+            </div>
+          )}
           <a
             href={`/sismos/${sismo.id}`}
             className="tf-button-primary"
-            style={{ fontSize: 11, padding: '5px 12px', display: 'inline-block', marginBottom: 8, textDecoration: 'none' }}
+            style={{
+              fontSize: 11,
+              padding: '6px 12px',
+              minHeight: 36,
+              display: 'inline-flex',
+              marginBottom: 4,
+              textDecoration: 'none',
+            }}
           >
             Ver detalle
           </a>
@@ -324,7 +348,7 @@ export default function SeismicMap({ sismos }: Props) {
 
   return (
     <div>
-      {/* Location Button & Info Header */}
+      {/* Botón de ubicación e información contextual */}
       <div
         style={{
           display: 'flex',
@@ -335,10 +359,10 @@ export default function SeismicMap({ sismos }: Props) {
           gap: 10,
         }}
       >
-        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tf-text-secondary)' }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
           {userPos ? (
-            <span style={{ color: '#34C759', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <i className="ti ti-check" /> Ubicación GPS activa
+            <span style={{ color: 'var(--signal-green)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <i className="ti ti-check" aria-hidden="true" /> Ubicación GPS activa
             </span>
           ) : (
             'Explora los sismos en el mapa interactivo y listado lateral:'
@@ -349,30 +373,23 @@ export default function SeismicMap({ sismos }: Props) {
           onClick={handleLocateUser}
           disabled={isLocating}
           className="tf-button-secondary"
-          style={{
-            fontSize: 12,
-            padding: '6px 14px',
-            borderRadius: 8,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
+          style={{ fontSize: 12, padding: '8px 14px' }}
         >
-          <i className="ti ti-current-location" />
-          {isLocating ? 'Obteniendo ubicación...' : 'Mi ubicación'}
+          <i className="ti ti-current-location" aria-hidden="true" />
+          {isLocating ? 'Obteniendo ubicación…' : 'Mi ubicación'}
         </button>
       </div>
 
       {geoError && (
         <div
+          role="alert"
           style={{
             padding: '8px 12px',
             marginBottom: 10,
-            borderRadius: 8,
-            background: '#FF3B3015',
-            border: '1px solid #FF3B3040',
-            color: '#FF3B30',
+            borderRadius: 10,
+            background: 'color-mix(in srgb, var(--alert-coral) 12%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--alert-coral) 40%, transparent)',
+            color: 'var(--alert-coral)',
             fontSize: 12,
             fontWeight: 600,
             display: 'flex',
@@ -380,7 +397,7 @@ export default function SeismicMap({ sismos }: Props) {
             gap: 6,
           }}
         >
-          <i className="ti ti-alert-circle" style={{ fontSize: 16 }} />
+          <i className="ti ti-alert-circle" style={{ fontSize: 16 }} aria-hidden="true" />
           <span>{geoError}</span>
         </div>
       )}
@@ -390,30 +407,33 @@ export default function SeismicMap({ sismos }: Props) {
           style={{
             padding: '8px 12px',
             marginBottom: 10,
-            borderRadius: 8,
-            background: 'var(--tf-surface)',
-            border: '1px solid var(--tf-border)',
+            borderRadius: 10,
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
             fontSize: 12,
             fontWeight: 600,
-            color: 'var(--tf-text)',
+            color: 'var(--text-primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: 8,
+            flexWrap: 'wrap',
           }}
         >
           <span>
-            Sismo más cercano a tu ubicación: <strong>{closestSismoInfo.sismo.attributes.place}</strong> ({closestSismoInfo.distKm} km)
+            Sismo más cercano a tu ubicación: <strong>{closestSismoInfo.sismo.attributes.place}</strong>{' '}
+            <span className="tf-mono">({closestSismoInfo.distKm} km)</span>
           </span>
           <a
             href={`/sismos/${closestSismoInfo.sismo.id}`}
-            style={{ color: 'var(--tf-accent)', textDecoration: 'none', fontWeight: 700, fontSize: 11 }}
+            style={{ color: 'var(--signal-cyan)', textDecoration: 'none', fontWeight: 700, fontSize: 11 }}
           >
             Ver detalle
           </a>
         </div>
       )}
 
-      {/* USGS-Style Split View: Sidebar + Map */}
+      {/* Vista dividida: listado + mapa */}
       <div
         style={{
           display: 'flex',
@@ -423,46 +443,24 @@ export default function SeismicMap({ sismos }: Props) {
           width: '100%',
         }}
       >
-        {/* Sidebar List (USGS Style) */}
-        <div
-          style={{
-            flex: '0 0 340px',
-            maxWidth: '100%',
-            background: 'var(--tf-surface)',
-            border: '1px solid var(--tf-border)',
-            borderRadius: 16,
-            display: 'flex',
-            flexDirection: 'column',
-            height: '560px',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Header */}
-          <div
-            style={{
-              padding: '12px 14px',
-              borderBottom: '1px solid var(--tf-border)',
-              background: 'var(--tf-bg)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
+        {/* Listado lateral */}
+        <div className="tf-map-sidebar">
+          <div className="tf-map-sidebar-head">
             <div>
-              <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--tf-text)' }}>
-                <i className="ti ti-list-details" style={{ color: 'var(--tf-accent)', marginRight: 6 }} />
-                Listado de Sismos
+              <div className="tf-map-sidebar-title">
+                <i className="ti ti-list-details" style={{ color: 'var(--signal-cyan)', marginRight: 6 }} aria-hidden="true" />
+                Listado de sismos
               </div>
-              <div style={{ fontSize: 11, color: 'var(--tf-text-secondary)', marginTop: 2 }}>
-                Página {currentPage} de {totalPages} ({sismos.length.toLocaleString()} eventos)
+              <div className="tf-map-sidebar-sub">
+                Página {currentPage} de {totalPages} · {sismos.length.toLocaleString('es-ES')} eventos
               </div>
             </div>
+            <span className="tf-status-chip tf-status--observacion">Tiempo real</span>
           </div>
 
-          {/* List items */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px' }}>
+          <div className="tf-map-sidebar-body">
             {currentPageSismos.length === 0 ? (
-              <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: 'var(--tf-text-secondary)' }}>
+              <div style={{ padding: 24, textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)' }}>
                 No se encontraron sismos con los filtros seleccionados.
               </div>
             ) : (
@@ -470,6 +468,7 @@ export default function SeismicMap({ sismos }: Props) {
                 const lat = Number(s.attributes.coordinates.latitude);
                 const lng = Number(s.attributes.coordinates.longitude);
                 const mag = Number(s.attributes.magnitude) || 0;
+                const status = getSeismicStatus(mag, s.attributes.tsunami);
                 const isSelected = selectedSismoId === s.id;
                 const validPos = isValidCoordinate(lat, lng);
 
@@ -478,116 +477,77 @@ export default function SeismicMap({ sismos }: Props) {
                     type="button"
                     key={s.id}
                     disabled={!validPos}
+                    aria-pressed={isSelected}
                     onClick={() => {
                       if (validPos) {
                         setSelectedSismoPos([lat, lng]);
                         setSelectedSismoId(s.id);
                       }
                     }}
-                    style={{
-                      width: '100%',
-                      textAlign: 'left',
-                      fontFamily: 'inherit',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      padding: '10px 12px',
-                      marginBottom: 6,
-                      borderRadius: 10,
-                      border: isSelected ? '1px solid var(--tf-accent)' : '1px solid var(--tf-border)',
-                      background: isSelected ? 'rgba(88, 86, 214, 0.12)' : 'var(--tf-surface)',
-                      cursor: validPos ? 'pointer' : 'default',
-                      opacity: validPos ? 1 : 0.6,
-                      transition: 'all 0.15s ease',
-                      outline: 'none',
-                    }}
+                    className="tf-sismo-item"
+                    style={{ opacity: validPos ? 1 : 0.6, cursor: validPos ? 'pointer' : 'default' }}
                   >
-                    {/* Magnitude Badge */}
-                    <div
-                      style={{
-                        minWidth: 42,
-                        height: 42,
-                        borderRadius: 10,
-                        background: magnitudeColor(mag),
-                        color: '#ffffff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 800,
-                        fontSize: 13,
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-                      }}
-                    >
-                      {mag.toFixed(1)}
+                    <div className={`tf-sismo-item-mag ${status.bgClass}`} aria-hidden="true">
+                      {formatMagnitude(mag)}
                     </div>
 
-                    {/* Sismo info */}
-                    <div style={{ flex: 1, overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          fontWeight: 700,
-                          fontSize: 12,
-                          color: 'var(--tf-text)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                        title={s.attributes.place}
-                      >
+                    <div className="tf-sismo-item-body">
+                      <div className="tf-sismo-item-place" title={s.attributes.place}>
                         {s.attributes.place}
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--tf-text-secondary)', marginTop: 2 }}>
-                        {formatApiDate(s.attributes.time)}
+                      <div className="tf-sismo-item-time" title="Hora del evento (tu zona horaria)">
+                        {formatApiDate(s.attributes.time)} · Prof. {formatDepth(s.attributes.depth)}
                       </div>
                     </div>
 
-                    {/* Tsunami Indicator */}
-                    {s.attributes.tsunami && (
-                      <span title="Alerta de Tsunami" style={{ color: '#FF3B30', fontSize: 14 }}>
-                        <i className="ti ti-waves" />
-                      </span>
-                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                      <span className={status.chipClass}>{status.label}</span>
+                      {s.attributes.tsunami && (
+                        <span title="Alerta de tsunami" style={{ color: 'var(--alert-coral)', fontSize: 14 }}>
+                          <i className="ti ti-waves" aria-hidden="true" /><span className="tf-visually-hidden">Alerta de tsunami</span>
+                        </span>
+                      )}
+                    </div>
                   </button>
                 );
               })
             )}
           </div>
 
-          {/* Pagination Footer */}
-          <div
-            style={{
-              padding: '10px 14px',
-              borderTop: '1px solid var(--tf-border)',
-              background: 'var(--tf-bg)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
+          <div className="tf-map-sidebar-foot">
             <button
               disabled={currentPage <= 1}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               className="tf-button-secondary"
-              style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6 }}
+              style={{ fontSize: 11, padding: '6px 12px', minHeight: 36 }}
             >
               Anterior
             </button>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--tf-text-secondary)' }}>
+            <span className="tf-mono" style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>
               {currentPage} / {totalPages}
             </span>
             <button
               disabled={currentPage >= totalPages}
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               className="tf-button-secondary"
-              style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6 }}
+              style={{ fontSize: 11, padding: '6px 12px', minHeight: 36 }}
             >
               Siguiente
             </button>
           </div>
         </div>
 
-        {/* Map Container */}
-        <div style={{ flex: '1 1 480px', minWidth: '300px', height: '560px', borderRadius: 16, overflow: 'hidden', border: '1px solid var(--tf-border)', position: 'relative' }}>
+        {/* Mapa */}
+        <div
+          className="tf-map-wrap"
+          style={{
+            flex: '1 1 480px',
+            minWidth: 280,
+            height: 560,
+            border: '1px solid var(--border)',
+            position: 'relative',
+          }}
+        >
           <MapContainer
             center={[15, 0]}
             zoom={2}

@@ -4,14 +4,18 @@ export const prerender = true;
 import BaseLayout from '../layouts/BaseLayout.astro';
 import MapSection from '../components/MapSection';
 ---
-<BaseLayout title="Mapa Sísmico Interactivo">
-  <div style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+<BaseLayout title="Actividad sísmica global">
+  <div class="tf-section-head">
     <div>
-      <h1 style="font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.4px;">
-        Monitoreo Sísmico en Tiempo Real
+      <span class="tf-eyebrow">
+        <i class="ti ti-activity" aria-hidden="true" style="font-size: 14px;"></i>
+        Actividad en vivo
+      </span>
+      <h1 class="tf-section-title" style="font-size: 26px; margin-top: 8px;">
+        Monitoreo sísmico en tiempo real
       </h1>
-      <p style="font-size: 13px; color: var(--tf-text-secondary); margin: 4px 0 0; font-weight: 500;">
-        Exploración interactiva de sismos registrados globalmente por USGS y percepción ciudadana.
+      <p class="tf-section-sub">
+        Exploración interactiva de sismos registrados globalmente y percepción ciudadana.
       </p>
     </div>
   </div>

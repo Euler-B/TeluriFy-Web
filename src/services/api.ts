@@ -9,6 +9,7 @@ export type Sismo = {
     magnitude: number;
     coordinates: { latitude: number; longitude: number };
     time: string;
+    depth?: number;
     mag_type?: string;
     tsunami?: boolean;
     external_id?: string;
@@ -26,6 +27,7 @@ export type SismoStats = {
     magnitude: number;
     place: string;
     time: string;
+    depth?: number;
   } | null;
   by_mag_type: Record<string, number>;
 };
@@ -145,12 +147,14 @@ export async function fetchSismosStats(signal?: AbortSignal): Promise<SismoStats
   if (attributes.max_magnitude && typeof attributes.max_magnitude === 'object') {
     const rawMag = Number(attributes.max_magnitude.magnitude);
     if (Number.isFinite(rawMag)) {
+      const rawDepth = Number(attributes.max_magnitude.depth);
       max_magnitude = {
         id: Number(attributes.max_magnitude.id ?? 0),
         title: String(attributes.max_magnitude.title ?? ''),
         magnitude: rawMag,
         place: String(attributes.max_magnitude.place ?? ''),
         time: String(attributes.max_magnitude.time ?? ''),
+        ...(Number.isFinite(rawDepth) ? { depth: rawDepth } : {}),
       };
     }
   }

@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import type { Sismo, SismoStats } from '../services/api';
 import { fetchAllSismos, fetchSismosStats } from '../services/api';
+import { getSeismicStatus } from '../utils/seismic';
 
-function magnitudeColor(mag: number): string {
-  if (mag >= 6.0) return '#FF3B30';
-  if (mag >= 5.0) return '#FF9500';
-  if (mag >= 3.0) return '#FFCC00';
-  return '#34C759';
-}
+const CATEGORIES = [
+  { label: 'Estable (< 3.0)', colorVar: 'var(--signal-green)', min: 0, max: 3 },
+  { label: 'Observación (3.0 – 4.9)', colorVar: 'var(--signal-cyan)', min: 3, max: 5 },
+  { label: 'Precaución (5.0 – 5.9)', colorVar: 'var(--warning-amber)', min: 5, max: 6 },
+  { label: 'Alerta (≥ 6.0)', colorVar: 'var(--alert-coral)', min: 6, max: Infinity },
+];
 
 export default function SeismicAnalytics() {
   const [stats, setStats] = useState<SismoStats | null>(null);
@@ -59,40 +60,41 @@ export default function SeismicAnalytics() {
 
   if (loading) {
     return (
-      <div className="tf-card" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--tf-text-secondary)' }}>
-        <i className="ti ti-loader-2" style={{ fontSize: 24, animation: 'spin 1s linear infinite', display: 'block', margin: '0 auto 12px' }} />
-        Cargando análisis estadístico de la red sísmica...
+      <div className="tf-loading" role="status" aria-label="Cargando análisis estadístico">
+        <div className="tf-loading-rings" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+          <img className="tf-logo-on-dark" src="/brand/telurify-symbol.svg" alt="" width="36" height="36" />
+          <img className="tf-logo-on-light" src="/brand/telurify-symbol-dark.svg" alt="" width="36" height="36" />
+        </div>
+        <div className="tf-loading-text">Cargando análisis estadístico…</div>
+        <div className="tf-loading-sub">Desglosando la red de monitoreo sísmico</div>
       </div>
     );
   }
 
   if (hasError) {
     return (
-      <div className="tf-card" style={{ textAlign: 'center', padding: '48px 24px' }}>
-        <i className="ti ti-wifi-off" style={{ fontSize: 36, color: '#FF3B30', display: 'block', marginBottom: 12 }} />
+      <div className="tf-card" style={{ textAlign: 'center', padding: '48px 24px' }} role="alert">
+        <i className="ti ti-wifi-off" style={{ fontSize: 36, color: 'var(--alert-coral)', display: 'block', marginBottom: 12 }} aria-hidden="true" />
         <h3 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700 }}>No se pudieron cargar los datos analíticos</h3>
-        <p style={{ margin: 0, fontSize: 13, color: 'var(--tf-text-secondary)', fontWeight: 500 }}>
+        <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>
           Ocurrió un error al comunicarse con el servidor sísmico. Por favor intenta más tarde.
         </p>
       </div>
     );
   }
 
-  // Calculate histogram counts from loaded sismos and server stats
   const loadedCount = sismos.length || 1;
   const serverTotalCount = stats?.total_sismos ?? 0;
 
-  const leveCount = sismos.filter((s) => s.attributes.magnitude < 3.0).length;
-  const moderadoCount = sismos.filter((s) => s.attributes.magnitude >= 3.0 && s.attributes.magnitude < 5.0).length;
-  const fuerteCount = sismos.filter((s) => s.attributes.magnitude >= 5.0 && s.attributes.magnitude < 6.0).length;
-  const severoCount = sismos.filter((s) => s.attributes.magnitude >= 6.0).length;
-
-  const categories = [
-    { label: 'Leve (<3.0)', count: leveCount, color: '#34C759' },
-    { label: 'Moderado (3.0 - 4.9)', count: moderadoCount, color: '#FFCC00' },
-    { label: 'Fuerte (5.0 - 5.9)', count: fuerteCount, color: '#FF9500' },
-    { label: 'Severo (≥6.0)', count: severoCount, color: '#FF3B30' },
-  ];
+  const categories = CATEGORIES.map((cat) => ({
+    ...cat,
+    count: sismos.filter(
+      (s) => s.attributes.magnitude >= cat.min && s.attributes.magnitude < cat.max
+    ).length,
+  }));
 
   const magTypes = stats?.by_mag_type
     ? Object.entries(stats.by_mag_type).sort((a, b) => b[1] - a[1])
@@ -102,63 +104,66 @@ export default function SeismicAnalytics() {
   const tsunamiDenominator = stats ? (serverTotalCount || 1) : loadedCount;
   const tsunamiPct = ((tsunamiCount / tsunamiDenominator) * 100).toFixed(1);
 
+  const maxStatus = stats?.max_magnitude
+    ? getSeismicStatus(stats.max_magnitude.magnitude)
+    : null;
+
   return (
     <div style={{ display: 'grid', gap: 20 }}>
-      {/* Top Stats Overview Grid */}
-      <div className="tf-grid-3">
-        <div className="tf-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: 'var(--tf-text-secondary)', marginBottom: 8 }}>
-            <i className="ti ti-activity" style={{ color: 'var(--tf-accent)', fontSize: 18 }} />
-            <span>Total Registros Sísmicos</span>
+      {/* Resumen superior */}
+      <div className="tf-stats-bar tf-stats-bar--3">
+        <div className="tf-stat-card">
+          <div className="tf-label" style={{ marginBottom: 8 }}>
+            <i className="ti ti-activity" style={{ color: 'var(--signal-cyan)', fontSize: 15, marginRight: 6 }} aria-hidden="true" />
+            Registros sísmicos
           </div>
-          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: -1, color: 'var(--tf-text)' }}>
-            {(stats?.total_sismos || sismos.length).toLocaleString()}
+          <div className="tf-stat-value" style={{ fontSize: 32 }}>
+            {(stats?.total_sismos || sismos.length).toLocaleString('es-ES')}
           </div>
-          <div style={{ fontSize: 11, color: 'var(--tf-text-secondary)', marginTop: 4, fontWeight: 600 }}>
-            {stats?.last_24h_count || 0} registrados en las últimas 24 horas
-          </div>
+          <div className="tf-stat-sub">{stats?.last_24h_count || 0} en las últimas 24 h</div>
         </div>
 
-        <div className="tf-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: 'var(--tf-text-secondary)', marginBottom: 8 }}>
-            <i className="ti ti-waves" style={{ color: '#FF3B30', fontSize: 18 }} />
-            <span>Alertas de Tsunami</span>
+        <div className="tf-stat-card">
+          <div className="tf-label" style={{ marginBottom: 8 }}>
+            <i className="ti ti-waves" style={{ color: 'var(--alert-coral)', fontSize: 15, marginRight: 6 }} aria-hidden="true" />
+            Alertas de tsunami
           </div>
-          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: -1, color: tsunamiCount > 0 ? '#FF3B30' : 'var(--tf-text)' }}>
+          <div
+            className="tf-stat-value"
+            style={{ fontSize: 32, color: tsunamiCount > 0 ? 'var(--alert-coral)' : 'var(--text-primary)' }}
+          >
             {tsunamiCount}
           </div>
-          <div style={{ fontSize: 11, color: 'var(--tf-text-secondary)', marginTop: 4, fontWeight: 600 }}>
-            {tsunamiPct}% del total de eventos registrados
-          </div>
+          <div className="tf-stat-sub">{tsunamiPct}% del total de eventos</div>
         </div>
 
-        <div className="tf-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: 'var(--tf-text-secondary)', marginBottom: 8 }}>
-            <i className="ti ti-bolt" style={{ color: '#FF9500', fontSize: 18 }} />
-            <span>Evento de Mayor Magnitud</span>
+        <div className="tf-stat-card">
+          <div className="tf-label" style={{ marginBottom: 8 }}>
+            <i className="ti ti-bolt" style={{ color: 'var(--warning-amber)', fontSize: 15, marginRight: 6 }} aria-hidden="true" />
+            Mayor magnitud
           </div>
-          {stats?.max_magnitude && typeof stats.max_magnitude.magnitude === 'number' && Number.isFinite(stats.max_magnitude.magnitude) ? (
+          {stats?.max_magnitude && maxStatus ? (
             <>
-              <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: -1, color: magnitudeColor(stats.max_magnitude.magnitude) }}>
+              <div className="tf-stat-value" style={{ fontSize: 32, color: maxStatus.colorVar }}>
                 M {stats.max_magnitude.magnitude.toFixed(1)}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--tf-text-secondary)', marginTop: 4, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div className="tf-stat-sub" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={stats.max_magnitude.place}>
                 {stats.max_magnitude.place}
               </div>
             </>
           ) : (
-            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--tf-text-secondary)' }}>--</div>
+            <div className="tf-stat-value" style={{ fontSize: 24, color: 'var(--text-secondary)' }}>--</div>
           )}
         </div>
       </div>
 
-      {/* Magnitude Distribution Histogram Card */}
+      {/* Distribución por rango */}
       <div className="tf-card">
         <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, letterSpacing: -0.3 }}>
-          Distribución por Rango de Magnitud
+          Distribución por estado sísmico
         </h3>
-        <p style={{ margin: '0 0 20px', fontSize: 12, color: 'var(--tf-text-secondary)', fontWeight: 500 }}>
-          Desglose de sismos según la escala de severidad sísmica.
+        <p style={{ margin: '0 0 20px', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>
+          Conteo de eventos según los umbrales de estado de la red: magnitud y alertas asociadas.
         </p>
 
         <div style={{ display: 'grid', gap: 14 }}>
@@ -167,19 +172,29 @@ export default function SeismicAnalytics() {
             return (
               <div key={cat.label}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
-                  <span style={{ color: 'var(--tf-text)' }}>{cat.label}</span>
-                  <span style={{ color: cat.color }}>
-                    {cat.count.toLocaleString()} eventos ({pct}%)
+                  <span style={{ color: 'var(--text-primary)' }}>{cat.label}</span>
+                  <span className="tf-mono" style={{ color: cat.colorVar }}>
+                    {cat.count.toLocaleString('es-ES')} ({pct}%)
                   </span>
                 </div>
-                <div style={{ height: 12, background: 'var(--tf-bg)', borderRadius: 6, overflow: 'hidden', border: '1px solid var(--tf-border)' }}>
+                <div
+                  role="img"
+                  aria-label={`${cat.label}: ${cat.count} eventos, ${pct}% del total`}
+                  style={{
+                    height: 10,
+                    background: 'var(--background)',
+                    borderRadius: 6,
+                    overflow: 'hidden',
+                    border: '1px solid var(--border)',
+                  }}
+                >
                   <div
                     style={{
                       height: '100%',
                       width: `${pct}%`,
-                      background: cat.color,
+                      background: cat.colorVar,
                       borderRadius: 6,
-                      transition: 'width 0.4s ease',
+                      transition: 'width 0.4s ease-out',
                     }}
                   />
                 </div>
@@ -189,13 +204,13 @@ export default function SeismicAnalytics() {
         </div>
       </div>
 
-      {/* Magnitude Type Breakdown */}
+      {/* Tipos de magnitud */}
       {magTypes.length > 0 && (
         <div className="tf-card">
           <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, letterSpacing: -0.3 }}>
-            Frecuencia por Tipo de Magnitud Sismológica
+            Frecuencia por tipo de magnitud
           </h3>
-          <p style={{ margin: '0 0 16px', fontSize: 12, color: 'var(--tf-text-secondary)', fontWeight: 500 }}>
+          <p style={{ margin: '0 0 16px', fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>
             Metodología de cálculo sísmico reportada por la red de estaciones sismológicas.
           </p>
 
@@ -206,19 +221,19 @@ export default function SeismicAnalytics() {
                 <div
                   key={type}
                   style={{
-                    background: 'var(--tf-bg)',
-                    border: '1px solid var(--tf-border)',
+                    background: 'var(--background)',
+                    border: '1px solid var(--border)',
                     borderRadius: 12,
                     padding: '12px 14px',
                   }}
                 >
-                  <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--tf-accent)', textTransform: 'uppercase' }}>
+                  <div className="tf-mono" style={{ fontSize: 11, fontWeight: 600, color: 'var(--signal-cyan)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     {type}
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 700, margin: '2px 0', color: 'var(--tf-text)' }}>
-                    {count.toLocaleString()}
+                  <div className="tf-mono" style={{ fontSize: 20, fontWeight: 600, margin: '2px 0', color: 'var(--text-primary)' }}>
+                    {count.toLocaleString('es-ES')}
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--tf-text-secondary)', fontWeight: 600 }}>
+                  <div className="tf-mono" style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>
                     {typePct}% del total
                   </div>
                 </div>
