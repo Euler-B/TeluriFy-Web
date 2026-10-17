@@ -13,12 +13,13 @@ try {
   const signal = AbortSignal.timeout(8000);
   sismo = await findSismoById(String(id), signal);
 } catch {
-  // sismo remains null — SismoDetail will show the not-found state
+  // sismo permanece null — SismoDetail muestra el estado "no encontrado"
 }
 ---
 <BaseLayout title={sismo ? `M ${sismo.attributes.magnitude} · ${sismo.attributes.place}` : `Sismo #${id}`}>
   <div style="margin-bottom: 16px;">
-    <a href="/mapa" class="tf-button-secondary" style="padding: 6px 14px; font-size: 13px;">
+    <a href="/mapa" class="tf-button-secondary" style="font-size: 13px;">
+      <i class="ti ti-arrow-left"></i>
       Volver al mapa
     </a>
   </div>

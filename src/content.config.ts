@@ -27,6 +27,7 @@ const news = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string(),
+    category: z.string().default('Sísmico'),
     sourceName: z.string(),
     sourceUrl: z.string().url(),
     pubDate: z.coerce.date(),

@@ -8,13 +8,34 @@ const lessons = (await getCollection('education'))
   .sort((a, b) => a.data.order - b.data.order);
 ---
 <BaseLayout title="Educación sísmica">
-  <h1>Educación sísmica</h1>
-  <ul>
-    {lessons.map((lesson) => (
-      <li>
-        <a href={`/educacion/${lesson.id}`}>{lesson.data.title}</a>
-        <p>{lesson.data.description}</p>
-      </li>
-    ))}
-  </ul>
+  <div class="tf-section-head">
+    <div>
+      <span class="tf-eyebrow">
+        <i class="ti ti-school" aria-hidden="true" style="font-size: 14px;"></i>
+        Formación
+      </span>
+      <h1 class="tf-section-title" style="font-size: 26px; margin-top: 8px;">Educación sísmica</h1>
+      <p class="tf-section-sub">
+        Lecciones progresivas sobre sismología, preparación y respuesta ante emergencias.
+      </p>
+    </div>
+  </div>
+
+  {lessons.length === 0 ? (
+    <div class="tf-empty-state">Aún no hay lecciones disponibles.</div>
+  ) : (
+    <div class="tf-editorial-grid">
+      {lessons.map((lesson) => (
+        <a class="tf-editorial-card" href={`/educacion/${lesson.id}`}>
+          <div class="tf-editorial-meta">
+            <span class="tf-editorial-tag">Educación</span>
+            <span>Nivel {lesson.data.level}</span>
+            <span class="tf-mono">Lección {lesson.data.order}</span>
+          </div>
+          <h2 class="tf-editorial-title">{lesson.data.title}</h2>
+          <p class="tf-editorial-desc">{lesson.data.description}</p>
+        </a>
+      ))}
+    </div>
+  )}
 </BaseLayout>

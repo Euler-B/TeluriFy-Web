@@ -1,23 +1,24 @@
 import { MapContainer, TileLayer, Marker, LayersControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import type { AlertLevel } from '../utils/seismic';
 
 interface Props {
   lat: number;
   lng: number;
-  color: string;
+  level: AlertLevel;
 }
 
-export default function SismoMiniMap({ lat, lng, color }: Props) {
+export default function SismoMiniMap({ lat, lng, level }: Props) {
   const icon = L.divIcon({
     className: '',
-    html: `<div style="width:24px;height:24px;border-radius:50%;background:${color}88;border:2px solid ${color};"></div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    html: `<div class="tf-marker tf-bg-${level}" style="width:26px;height:26px;opacity:0.92;"></div>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
   });
 
   return (
-    <div className="tf-card" style={{ padding: 0, overflow: 'hidden' }}>
+    <div className="tf-card" style={{ padding: 0, overflow: 'hidden', borderRadius: 14 }}>
       <MapContainer
         center={[lat, lng]}
         zoom={7}

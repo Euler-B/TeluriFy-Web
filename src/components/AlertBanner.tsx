@@ -37,14 +37,15 @@ export default function AlertBanner({ sismos }: { sismos: Sismo[] }) {
 
   return (
     <div className="tf-alert-banner" role="alert">
-      <i className="ti ti-alert-triangle-filled" style={{ fontSize: 18, flexShrink: 0 }} />
+      <span className="tf-status-chip tf-status--alerta" aria-hidden="true">
+        Alerta
+      </span>
+      <i className="ti ti-alert-triangle-filled" style={{ fontSize: 18, flexShrink: 0 }} aria-hidden="true" />
       <div style={{ flex: 1 }}>
-        <span style={{ fontWeight: 700 }}>Sismo significativo en las últimas 24h — </span>
-        M {top.attributes.magnitude.toFixed(1)} · {top.attributes.place}
+        <span style={{ fontWeight: 700 }}>Sismo significativo en las últimas 24 h — </span>
+        <span className="tf-mono">M {top.attributes.magnitude.toFixed(1)}</span> · {top.attributes.place}
         {severe.length > 1 && (
-          <span style={{ color: '#C0392B', marginLeft: 6 }}>
-            (+{severe.length - 1} más)
-          </span>
+          <span style={{ marginLeft: 6, opacity: 0.85 }}>(+{severe.length - 1} más)</span>
         )}
       </div>
       {top.links?.external_url && (
@@ -55,12 +56,15 @@ export default function AlertBanner({ sismos }: { sismos: Sismo[] }) {
           style={{
             fontSize: 11,
             fontWeight: 700,
-            color: '#C0392B',
+            color: 'inherit',
             textDecoration: 'none',
             whiteSpace: 'nowrap',
-            border: '1px solid #FF3B3040',
+            border: '1px solid color-mix(in srgb, var(--alert-coral) 45%, transparent)',
             borderRadius: 6,
-            padding: '3px 8px',
+            padding: '5px 10px',
+            minHeight: 32,
+            display: 'inline-flex',
+            alignItems: 'center',
           }}
         >
           Ver en USGS

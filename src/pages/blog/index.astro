@@ -3,18 +3,39 @@ export const prerender = true;
 
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { formatShortDate } from '../../utils/date';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---
 <BaseLayout title="Blog">
-  <h1>Blog</h1>
-  <ul>
-    {posts.map((post) => (
-      <li>
-        <a href={`/blog/${post.id}`}>{post.data.title}</a>
-        <p>{post.data.description}</p>
-      </li>
-    ))}
-  </ul>
+  <div class="tf-section-head">
+    <div>
+      <span class="tf-eyebrow">
+        <i class="ti ti-pencil" aria-hidden="true" style="font-size: 14px;"></i>
+        Novedades
+      </span>
+      <h1 class="tf-section-title" style="font-size: 26px; margin-top: 8px;">Blog</h1>
+      <p class="tf-section-sub">
+        Bitácora de producto y notas técnicas del observatorio Telurify.
+      </p>
+    </div>
+  </div>
+
+  {posts.length === 0 ? (
+    <div class="tf-empty-state">Aún no hay publicaciones en el blog.</div>
+  ) : (
+    <div class="tf-editorial-grid">
+      {posts.map((post) => (
+        <a class="tf-editorial-card" href={`/blog/${post.id}`}>
+          <div class="tf-editorial-meta">
+            <span class="tf-editorial-tag">Blog</span>
+            <span class="tf-mono">{formatShortDate(post.data.pubDate)}</span>
+          </div>
+          <h2 class="tf-editorial-title">{post.data.title}</h2>
+          <p class="tf-editorial-desc">{post.data.description}</p>
+        </a>
+      ))}
+    </div>
+  )}
 </BaseLayout>

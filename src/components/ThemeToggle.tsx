@@ -1,19 +1,24 @@
 import { useEffect, useState } from 'react';
 
-function getValidTheme(val: string | null): 'light' | 'dark' | null {
+type Theme = 'light' | 'dark';
+
+function getValidTheme(val: string | null): Theme | null {
   if (val === 'light' || val === 'dark') return val;
   return null;
 }
 
+function applyTheme(theme: Theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('tf-theme', theme);
+  window.dispatchEvent(new CustomEvent('tf-theme-change', { detail: { theme } }));
+}
+
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
     const rawSaved = localStorage.getItem('tf-theme');
-    const validSaved = getValidTheme(rawSaved);
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initial = validSaved || (systemPrefersDark ? 'dark' : 'light');
-
+    const initial = getValidTheme(rawSaved) ?? 'dark';
     setTheme(initial);
     document.documentElement.setAttribute('data-theme', initial);
 
@@ -29,33 +34,32 @@ export default function ThemeToggle() {
     return () => window.removeEventListener('tf-theme-change', handleThemeChange);
   }, []);
 
-  function toggleTheme() {
-    const nextTheme = theme === 'light' ? 'dark' : 'light';
+  function selectTheme(nextTheme: Theme) {
+    if (nextTheme === theme) return;
     setTheme(nextTheme);
-    document.documentElement.setAttribute('data-theme', nextTheme);
-    localStorage.setItem('tf-theme', nextTheme);
-    window.dispatchEvent(new CustomEvent('tf-theme-change', { detail: { theme: nextTheme } }));
+    applyTheme(nextTheme);
   }
 
   return (
-    <button
-      onClick={toggleTheme}
-      className="tf-button-secondary"
-      style={{
-        padding: '6px 12px',
-        fontSize: 13,
-        borderRadius: 10,
-        gap: 6,
-      }}
-      title={`Cambiar a modo ${theme === 'light' ? 'oscuro' : 'claro'}`}
-    >
-      <i
-        className={`ti ti-${theme === 'light' ? 'moon' : 'sun'}`}
-        style={{ fontSize: 16, color: theme === 'light' ? '#5856D6' : '#FFCC00' }}
-      />
-      <span style={{ fontSize: 12, fontWeight: 700 }}>
-        {theme === 'light' ? 'Oscuro' : 'Claro'}
-      </span>
-    </button>
+    <div className="tf-theme-switch" role="group" aria-label="Tema de la interfaz">
+      <button
+        type="button"
+        onClick={() => selectTheme('dark')}
+        aria-label="Tema oscuro"
+        aria-pressed={theme === 'dark'}
+        title="Tema oscuro"
+      >
+        <i className="ti ti-moon" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        onClick={() => selectTheme('light')}
+        aria-label="Tema claro"
+        aria-pressed={theme === 'light'}
+        title="Tema claro"
+      >
+        <i className="ti ti-sun" aria-hidden="true" />
+      </button>
+    </div>
   );
 }

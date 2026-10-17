@@ -111,10 +111,13 @@ export default function NotificationOptIn() {
   const canEnable = status === 'ready' || status === 'error';
 
   return (
-    <section className="tf-card" style={{ marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+    <section className="tf-card" style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
       <div>
-        <h2 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px' }}>Alertas sísmicas</h2>
-        <p style={{ fontSize: 13, color: 'var(--tf-text-secondary)', fontWeight: 500, margin: 0 }}>{messages[status]}</p>
+        <h2 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 4px' }}>
+          <i className="ti ti-bell-ringing" style={{ color: 'var(--signal-cyan)', marginRight: 6 }} aria-hidden="true" />
+          Alertas sísmicas
+        </h2>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500, margin: 0 }}>{messages[status]}</p>
       </div>
       {canEnable && <button type="button" className="tf-button-primary" onClick={enableNotifications}>Activar alertas</button>}
     </section>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Símbolo monocromático claro de Telurify">
+  <circle cx="32" cy="32" r="21" stroke="#E8F1F7" stroke-width="2.5" fill="none" opacity="0.45"/>
+  <path d="M6 33 L13 33 L18 24 L23 42 L31 14 L39 48 L44 26 L50 33 L57 33" stroke="#E8F1F7" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="32" r="3.5" fill="#E8F1F7"/>
+</svg>

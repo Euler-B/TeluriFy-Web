@@ -78,8 +78,8 @@ export default function ShareExportCard({ sismo }: { sismo: Sismo }) {
   return (
     <div className="tf-card" style={{ marginTop: 16 }}>
       <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <i className="ti ti-share" style={{ color: 'var(--tf-accent)', fontSize: 18 }} />
-        Compartir y Exportar Evento Sísmico
+        <i className="ti ti-share" style={{ color: 'var(--signal-cyan)', fontSize: 18 }} aria-hidden="true" />
+        Compartir y exportar evento sísmico
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
@@ -89,7 +89,7 @@ export default function ShareExportCard({ sismo }: { sismo: Sismo }) {
           className="tf-button-secondary"
           style={{ fontSize: 12, padding: '8px 14px' }}
         >
-          <i className={`ti ti-${copied ? 'check' : copyError ? 'alert-triangle' : 'link'}`} style={{ color: copied ? '#34C759' : copyError ? '#FF3B30' : 'var(--tf-accent)' }} />
+          <i className={`ti ti-${copied ? 'check' : copyError ? 'alert-triangle' : 'link'}`} style={{ color: copied ? 'var(--signal-green)' : copyError ? 'var(--alert-coral)' : 'var(--signal-cyan)' }} aria-hidden="true" />
           {copied ? '¡Enlace copiado!' : copyError ? 'Error al copiar' : 'Copiar enlace'}
         </button>
 
@@ -113,7 +113,7 @@ export default function ShareExportCard({ sismo }: { sismo: Sismo }) {
           className="tf-button-secondary"
           style={{ fontSize: 12, padding: '8px 14px', textDecoration: 'none' }}
         >
-          <i className="ti ti-brand-x" style={{ color: 'var(--tf-text)' }} />
+          <i className="ti ti-brand-x" style={{ color: 'var(--text-primary)' }} aria-hidden="true" />
           Compartir en X
         </a>
 
@@ -123,7 +123,7 @@ export default function ShareExportCard({ sismo }: { sismo: Sismo }) {
           className="tf-button-secondary"
           style={{ fontSize: 12, padding: '8px 14px', marginLeft: 'auto' }}
         >
-          <i className="ti ti-file-code" style={{ color: '#FF9500' }} />
+          <i className="ti ti-file-code" style={{ color: 'var(--warning-amber)' }} aria-hidden="true" />
           JSON
         </button>
 
@@ -133,7 +133,7 @@ export default function ShareExportCard({ sismo }: { sismo: Sismo }) {
           className="tf-button-secondary"
           style={{ fontSize: 12, padding: '8px 14px' }}
         >
-          <i className="ti ti-file-spreadsheet" style={{ color: '#34C759' }} />
+          <i className="ti ti-file-spreadsheet" style={{ color: 'var(--signal-green)' }} aria-hidden="true" />
           CSV
         </button>
       </div>
